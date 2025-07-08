@@ -3,4 +3,4 @@ Implementation of voronoi diagram in Python for my engineering project
 
 To run up streamlit
 
-'streamlit run main.py'
+`streamlit run main.py`
