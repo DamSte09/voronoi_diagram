@@ -1,36 +1,31 @@
-
-
-
-
-    
-
 class DCEL:
     def __init__(self, points):
-        self.points = points
+        self.vertices = []
+        self.half_edges = []
+        self.faces = []
 
 
-class Vertice(DCEL):
-    def __init__(self):
-        self.name_vertice = "" # np. v1 
-        self.coordinates = [] # np. [0,4]
+class Vertex:
+    def __init__(self, point:list):
+        self.x = point[0] 
+        self.y = point[1] 
         self.incident_edge = [] # np. e1,2, aktualne vi to poczatek
 
 
 
-class Face(DCEL):
+class Face:
     def __init__(self):
-        self.name_face = ""
         self.outer_component = None
         self.inner_component = None
+        self.site = None
 
 
-class HalfEdge(DCEL):
+class HalfEdge:
     def __init__(self):
-        self.half_edge = ""
-        self.origin = "" # poczatek
-        self.twin = ""
-        self.next = ""
-        self.prev = ""
+        self.origin = None # poczatek
+        self.twin = None
+        self.next = None
+        self.prev = None 
 
 
         
