@@ -1,26 +1,25 @@
 
-P = [[1,2], [ 5,2 ], [1,6], [5,1]]
+class Node:
+    """Break point on beachline, keeps 2 sorted centres by x,
+      left defines left arc, right - right arc
+      if parent is none then it is root
+    """
+    def __init__(self, left_point, right_point):
+        self.left_point = left_point
+        self.right_point = right_point
+        self.parent = None 
+        self.left_child = None 
+        self.right_child = None
+        self.half_edge = None
+        
 
-
-# najpierw drzewo binarne
-
-class BinarySearchTree:
-    def __init__(self, node):
-        self.root = None
-        self.node = node
-        self.list_of_nodes = []
-
-    def is_root(self):
-        if self.list_of_nodes == []:
-            self.root = self.node
-            self.list_of_nodes.append(self.root)
-
-
-class TreeNode:
+class Leaf:
+    """Keep centre which define arc"""
     def __init__(self, point):
-        self.point = point
-        self.left = None
-        self.right = None
+        self.centre = point
+        self.parent = None
+        self.circle_event = None
+
 
 
 
