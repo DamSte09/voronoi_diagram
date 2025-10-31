@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 import csv
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
-
 
 
 def generatePoints(number_points):
@@ -13,47 +11,44 @@ def generatePoints(number_points):
         array_points.append(point)
     return array_points
 
-
-
 def savePointsToFile(array_points):
     df = pd.DataFrame(array_points)
-    df.to_csv("points.csv", index = False)
+    df.to_csv("points.csv", index = False, sep = ";")
     print("Zapisano do pliku")
 
-
-
 def readPointsFromFile(path):
+    array_points = []
+
     try:
-        df = pd.read_csv(path)
-        array_points = df.to_numpy()
+        with open(path) as csvfile:
+            reader = csv.reader(csvfile, delimiter =',', quoting=csv.QUOTE_NONNUMERIC)
+            for row in reader:
+                array_points.append(row)
 
-        return array_points
-
-    except e:
-        print("Nie znaleziono pliku")
-
-
-
+    except Exception as e:
+        print("Error: ", e)
+    
+    return array_points
 
 def main():
-    print("zaczynam")
-    points = []
-    N = 10
+    #print("zaczynam")
+    #points = []
+    #N = 10
 
     print("Punkty z pliku")
-    points = readPointsFromFile("points.csv") 
+    points = readPointsFromFile("data/points.csv") 
     print(points)
 
-    print("Wygenerowane punkty")
-    points = generatePoints(N)
-    print(points)
+    #print("Wygenerowane punkty")
+    #points = generatePoints(N)
+    #print(points)
 
 
-    savePointsToFile(points)
+    #savePointsToFile(points)
 
     
-    points = np.asarray(points)
-# plt.scatter(points[:, 0], points[:, 1])
+    #points = np.asarray(points)
+    # plt.scatter(points[:, 0], points[:, 1])
 
 
 if __name__ == '__main__':
