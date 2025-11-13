@@ -11,15 +11,27 @@ class Node:
         self.left_child = None 
         self.right_child = None
         self.half_edge = None
+
+    def balance_tree(self):
+        pass 
+
         
 
 class Leaf:
-    """Keep centre which define arc"""
-    def __init__(self, point):
+    """Lowest node of a tree, keeps centre which define arc"""
+    def __init__(self, point: list):
         self.centre = point
         self.parent = None
         self.circle_event = None
 
+    def remove_leaf(self):
+        parent = self.parent
 
+        if parent.left_child == self:
+            parent.left_child = None
+        elif parent.right_child == self:
+            parent.right_child = None
+
+        self.parent = None
 
 
