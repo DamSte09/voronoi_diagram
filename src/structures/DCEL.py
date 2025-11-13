@@ -5,10 +5,19 @@ class DCEL:
         self.faces = []
     
     def add_face(self, new_centre):
+        """Create face record and appends to list of faces in DCEL
+        
+        :param new_centre: New met point by sweep
+        """
         face_j = Face(new_centre)
         self.faces.append(face_j)
     
     def add_halfedges(self, new_centre, new_subtree):
+        """Adds records of new halfedges to DCEL into list of halfedges.
+        
+        :param new_centre: New met point by sweep 
+        :param new_subtree: Subree made from arc above and new point
+        """
         p_i = new_centre
         p_j = new_subtree.left_child.centre
 
