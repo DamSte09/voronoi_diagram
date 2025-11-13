@@ -2,6 +2,7 @@
 class EventsQueue:
     def __init__(self, points):
         self.points = points
+        self.all_events = []
         self.site_events = []
         self.circle_events = [] 
         
@@ -10,12 +11,13 @@ class EventsQueue:
         self.points.sort(key=lambda point:point[1], reverse=True)
         for point in self.points:
             self.site_events.append(SiteEvent(point))
+            self.all_events.append(SiteEvent(point))
         
     def remove_biggest_y(self):
         """Removes event with the largest y coordinate"""
+        # Poprawić na jedną listę wszystkich eventów
         all_se = self.site_events
         all_ce = self.circle_events
-        points = self.points
 
         biggest_se = max(all_se, key=lambda se: se.centre[1])
         print(biggest_se.centre)
@@ -26,23 +28,33 @@ class EventsQueue:
 
             if biggest_ce.centre[1] < biggest_se.centre[1]:
                 all_se.remove(biggest_se.centre)    
-                points.remove(biggest_se.centre)
+                self.all_events.remove(biggest_se.centre)
             else:
                 all_ce.remove(biggest_ce.centre)    
-                points.remove(biggest_ce.centre)
+                self.all_events.remove(biggest_ce.centre)
         else:
             all_se.remove(biggest_se.centre)    
-            points.remove(biggest_se.centre)
+            self.all_events.remove(biggest_se.centre)
         
         self.site_events = all_se
         self.circle_events = all_ce
-        self.points = points       
 
-    def check_if_circle_event(self, event):
-        all_se = self.site_events
-        all_se.remove(event)
+    def insert_event(self, event):
+        i = 0
+        while i < len(self.all_events):
+            current = self.all_events[i]
+
+            if event.centre[1] > current.centre[1]:
+                break
+            elif event.centre[1] == current.centre[1]:
+                if type(event).__name__ == "SiteEvent" and type(current).__name__ == "CircleEvent":
+                    break
+
+            i += 1
+
+        self.all_events.insert(i, event)
+
         
-
 class SiteEvent:
     def __init__(self, point):
         self.centre = point
@@ -50,5 +62,5 @@ class SiteEvent:
 
 class CircleEvent:
     def __init__(self, point):
-        self.event_point = point
-        self.node_pointer = ""
+        self.centre = point
+        self.node_pointer = None
