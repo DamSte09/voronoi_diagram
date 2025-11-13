@@ -1,6 +1,6 @@
 import math
 from src.structures.BST import Leaf, Node
-
+from src.structures.QE import CircleEvent
 
 
 def handle_site_event(root, new_event, queue, dcel):
@@ -42,6 +42,15 @@ def handle_site_event(root, new_event, queue, dcel):
 
     dcel.add_new_halfedges(new_event, arc_above)
     
+    left_neighbour = predecessor(arc_above.left_child)
+    right_neighbour = successor(arc_above.right_child.right_child)
+
+    left_three_arcs = [left_neighbour,arc_above.left_child, arc_above.right_child.left_child]
+    right_three_arcs = [arc_above.right_child.left_child, arc_above.right_child.right_child, right_neighbour]
+    y_sweep = new_event[1]
+    
+    check_circle_event(right_three_arcs, dcel, queue)
+    check_circle_event(left_three_arcs, dcel, queue)
 
 # as a method?
 def remove_from_queue(leaf, queue):
@@ -89,11 +98,55 @@ def successor(leaf):
 
     return curr
 
+def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep, queue):
+    """Checks if 3 given points are on one circle
+    
+    :param three_next_leafs: List of 3 next leafs
+    """
+    a, b, c = three_next_leafs
+    A = a.centre
+    B = b.centre
+    C = c.centre
+    
+    # Are points are collinear
+    EPS = 1e-9
+    det = (B[0] - A[0])*(C[1] - A[1]) - (B[1] - A[1])*(C[0] - A[0])
 
+    if abs(det)< EPS:
+        print("No circle event, points are collinear")
+        return None
+    
+    # Counting centre of a circle
+    
+    ux, uy = circle_center(A, B, C)
+    r = math.sqrt( ( ux - A[0] ) ** 2 + (uy - A[1])**2)
+    event_y = uy - r # lowest point of circle
+    
+    if event_y >= y_sweep:
+        return None
 
-def check_circle_event(a, b, c):
-    """Counts if 3 given points are on one circle"""
-    pass
+    # Adding middle point as a pointer, bc middle arc will be the one which dissapears
+    event = CircleEvent([ux, event_y], b)
+    b.circle_event = event
+
+    queue.insert_event(event)
+    
+
+    
+
+def circle_center(A, B, C):
+    Ax, Ay = A
+    Bx, By = B
+    Cx, Cy = C
+    d = 2 * (Ax * (By - Cy) + Bx * (Cy - Ay) + Cx * (Ay - By))
+
+    ux = ((Ax**2 + Ay**2)*(By - Cy) +
+          (Bx**2 + By**2)*(Cy - Ay) +
+          (Cx**2 + Cy**2)*(Ay - By)) / d
+    uy = ((Ax**2 + Ay**2)*(Cx - Bx) +
+          (Bx**2 + By**2)*(Ax - Cx) +
+          (Cx**2 + Cy**2)*(Bx - Ax)) / d
+    return ux, uy
 
 def replace_with_subtree(arc_above: Leaf, new_centre):
     """Replaces leaf of arc above new centre with subtree with 3 leafs: 
