@@ -122,6 +122,7 @@ def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep, queue)
     r = math.sqrt( ( ux - A[0] ) ** 2 + (uy - A[1])**2)
     event_y = uy - r # lowest point of circle
     
+    # Condition that that event cannot be higher than y_sweep
     if event_y >= y_sweep:
         return None
 

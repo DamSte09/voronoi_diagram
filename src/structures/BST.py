@@ -15,6 +15,32 @@ class Node:
     def balance_tree(self):
         pass 
 
+    def remove_leaf(self, leaf):
+        """Removes fading leaf which represent fading arc in BST
+        
+        :param leaf: Leaf which represnts fading arc
+        """
+        leaf_parent = leaf.parent
+        
+        if leaf_parent.left_child == leaf:
+            replacement = leaf_parent.right_child
+        else:
+            replacement = leaf_parent.left_child
+            
+        # Grandparent is now parent of replacement
+        replacement.parent = leaf_parent.parent
+
+        # Check which child new replacement is and replaces child
+        if leaf_parent.parent.right_child == leaf_parent:
+            leaf_parent.parent.right_child = replacement
+        else:
+            leaf_parent.parent.left_child = replacement
+            
+        #Updates points in nodes
+        
+            
+        leaf_parent = None
+
         
 
 class Leaf:
@@ -24,14 +50,7 @@ class Leaf:
         self.parent = None
         self.circle_event = None
 
-    def remove_leaf(self):
-        parent = self.parent
-
-        if parent.left_child == self:
-            parent.left_child = None
-        elif parent.right_child == self:
-            parent.right_child = None
-
-        self.parent = None
+   
+            
 
 
