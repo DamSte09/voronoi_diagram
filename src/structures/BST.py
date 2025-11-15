@@ -17,6 +17,7 @@ class Node:
 
     def remove_leaf(self, leaf):
         """Removes fading leaf which represent fading arc in BST
+        After leaf is removed, points in grandparent node are updated.
         
         :param leaf: Leaf which represnts fading arc
         """
@@ -27,33 +28,35 @@ class Node:
         else:
             replacement = leaf_parent.left_child
             
-        # Grandparent is now parent of replacement
-        replacement.parent = leaf_parent.parent
-
-        # Check which child new replacement is and replaces child
-        if leaf_parent.parent.right_child == leaf_parent:
-            leaf_parent.parent.right_child = replacement
+        if leaf_parent.parent is None:
+            replacement.parent = None
         else:
-            leaf_parent.parent.left_child = replacement
-            
-        #Updates points in nodes
-        if replacement.parent.left_child == replacement:
-            current = replacement
-            
-            while isinstance(current, Node):
-                current = current.right_child
+            # Grandparent is now parent of replacement
+            replacement.parent = leaf_parent.parent
 
-            replacement.parent.left_point = current.centre
-        else:
-            current = replacement
-            
-            while isinstance(current, Node):
-                current = current.left_child
+            # Check which child new replacement is and replaces child
+            if leaf_parent.parent.right_child == leaf_parent:
+                leaf_parent.parent.right_child = replacement
+            else:
+                leaf_parent.parent.left_child = replacement
+                
+            #Updates points in nodes
+            if replacement.parent.left_child == replacement:
+                current = replacement
+                
+                while isinstance(current, Node):
+                    current = current.right_child
 
-            replacement.parent.right_point = current.centre
+                replacement.parent.left_point = current.centre
+            else:
+                current = replacement
+                
+                while isinstance(current, Node):
+                    current = current.left_child
 
-            
-        leaf_parent = None
+                replacement.parent.right_point = current.centre
+
+        leaf.parent = None
 
         
 
