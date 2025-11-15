@@ -37,7 +37,21 @@ class Node:
             leaf_parent.parent.left_child = replacement
             
         #Updates points in nodes
-        
+        if replacement.parent.left_child == replacement:
+            current = replacement
+            
+            while isinstance(current, Node):
+                current = current.right_child
+
+            replacement.parent.left_point = current.centre
+        else:
+            current = replacement
+            
+            while isinstance(current, Node):
+                current = current.left_child
+
+            replacement.parent.right_point = current.centre
+
             
         leaf_parent = None
 
