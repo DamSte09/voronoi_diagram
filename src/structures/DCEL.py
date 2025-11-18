@@ -12,7 +12,7 @@ class DCEL:
         face_j = Face(new_centre)
         self.faces.append(face_j)
     
-    def add_halfedges(self, new_centre, new_subtree):
+    def add_halfedges_site(self, new_centre, new_subtree):
         """Adds records of new halfedges to DCEL into list of halfedges.
         
         :param new_centre: New met point by sweep 
