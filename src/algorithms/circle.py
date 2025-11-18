@@ -1,7 +1,7 @@
 from src.structures.QE import EventsQueue
 from src.structures.DCEL import DCEL, Vertex, HalfEdge, Face
 from src.structures.BST import Leaf, Node
-from funcs import successor,predecessor, remove_from_queue, circle_center
+from funcs import successor,predecessor, remove_from_queue, circle_center, check_circle_event
 
 def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
     left_leaf = predecessor(y)
@@ -39,11 +39,11 @@ def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
     e_lr.next = e_old_left
     e_old_left.prev = e_lr
     
-    e_rl.next = e_old_right
-    e_old_right.prev = e_rl
-    
     e_old_left.next = e_rl
     e_rl.prev = e_old_left
+
+    e_rl.next = e_old_right
+    e_old_right.prev = e_rl
 
     e_old_right.next = e_lr
     e_lr.prev = e_old_right
@@ -60,7 +60,7 @@ def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
 
     dcel.half_edges.extend([e_lr, e_rl])
 
-    root.remove_leaf(y)
+    root.replace_vanishing_leaf(y, A, C)
     root.balance_tree()
 
     queue.remove_circle_event(y)
@@ -69,6 +69,11 @@ def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
         if neighbor.circle_event == y.circle_event:
             queue.remove_circle_event(neighbor)
             neighbor.circle_event = None
+            
+            
+
+    check_circle_event(left_leaf, right_leaf, successor(right_leaf))
+    check_circle_event(predecessor(left_leaf), left_leaf, right_leaf)
 
     
     
