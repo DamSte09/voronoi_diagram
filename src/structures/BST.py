@@ -15,24 +15,30 @@ class Node:
     def balance_tree(self):
         pass 
 
-    def remove_leaf(self, leaf):
+    def replace_vanishing_leaf(self, leaf, left_point, right_point):
         """Removes fading leaf which represent fading arc in BST
         After leaf is removed, points in grandparent node are updated.
         
         :param leaf: Leaf which represnts fading arc
         """
+        # parent of leaf
         leaf_parent = leaf.parent
         
+        # Find which child is actual leaf
         if leaf_parent.left_child == leaf:
             replacement = leaf_parent.right_child
         else:
             replacement = leaf_parent.left_child
             
+        # Is leaf_parent root
         if leaf_parent.parent is None:
             replacement.parent = None
         else:
             # Grandparent is now parent of replacement
             replacement.parent = leaf_parent.parent
+            new_parent = replacement.parent
+            new_parent.left_point = left_point 
+            new_parent.right_point = right_point 
 
             # Check which child new replacement is and replaces child
             if leaf_parent.parent.right_child == leaf_parent:
@@ -41,22 +47,27 @@ class Node:
                 leaf_parent.parent.left_child = replacement
                 
             #Updates points in nodes
-            if replacement.parent.left_child == replacement:
-                current = replacement
+            # if replacement.parent.left_child == replacement:
+            #     current = replacement
                 
-                while isinstance(current, Node):
-                    current = current.right_child
+            #     while isinstance(current, Node):
+            #         current = current.right_child
 
-                replacement.parent.left_point = current.centre
-            else:
-                current = replacement
+            #     replacement.parent.left_point = current.centre
+            # else:
+            #     current = replacement
                 
-                while isinstance(current, Node):
-                    current = current.left_child
+            #     while isinstance(current, Node):
+            #         current = current.left_child
 
-                replacement.parent.right_point = current.centre
+            #     replacement.parent.right_point = current.centre
+            #     
+
 
         leaf.parent = None
+        leaf_parent.left_child = None
+        leaf_parent.right_child = None
+        leaf_parent.parent = None
 
         
 
