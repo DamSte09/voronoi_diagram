@@ -236,6 +236,28 @@ def count_x_breakpoint(left_centre, right_centre, y_sweep):
 
 
 
+def intersect_ray_with_box(origin, direction, box):
+    x0, y0 = origin
+    dx, dy = direction
+    x_min, y_min = box[0]
+    x_max, y_max = box[2]
 
-    
+    t_values = []
+    if dx != 0:
+        t_left = (x_min - x0) / dx
+        t_right = (x_max - x0) / dx
+        t_values.extend([t for t in (t_left, t_right) if t > 0])
+    if dy != 0:
+        t_bottom = (y_min - y0) / dy
+        t_top = (y_max - y0) / dy
+        t_values.extend([t for t in (t_bottom, t_top) if t > 0])
+
+    if not t_values:
+        return None
+
+    t = min(t_values)  # najbliższe przecięcie
+    return (x0 + dx * t, y0 + dy * t)
+
+
+
 
