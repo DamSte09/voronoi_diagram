@@ -1,4 +1,6 @@
 import math
+import matplotlib.pyplot as plt
+
 from src.structures.BST import Leaf, Node
 from src.structures.QE import CircleEvent
 
@@ -260,4 +262,16 @@ def intersect_ray_with_box(origin, direction, box):
 
 
 
+for face in dcel.faces:
+    he = face.outer_component
+    start = he
+    vertices = []
+    while True:
+        vertices.append((he.origin.x, he.origin.y))
+        he = he.next
+        if he == start:
+            break
+    xs, ys = zip(*vertices)
+    plt.fill(xs, ys, edgecolor="black", fill=False)  # tylko krawędzie
+plt.show()
 
