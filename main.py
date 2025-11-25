@@ -1,27 +1,32 @@
 from src.utils.points import readPointsFromFile
 from src.structures.QE import EventsQueue, SiteEvent, CircleEvent
+from src.structures.BST import Root, Node, Leaf
+from src.structures.DCEL import DCEL, Vertex, HalfEdge, Face
+from funcs import handle_site_event
+from src.algorithms.circle import handle_circle_event
+
+
 import streamlit as st
 
 
 def main():
     points = readPointsFromFile("data/points.csv")
     print(points)
+
     Q = EventsQueue(points)
-    Q.inicialize_queue()
-    all_se = Q.site_events
-
-    for se in all_se:
-        print(se.centre)
-
-    Q.remove_biggest_y()
-
-    events = Q.points
+    print(Q.all_events)
     
-    for event in events:
-        if any(event == se.centre for se in all_se):
-            print("Site event:", event)
-        else:
-            print("Circle event: ", event)
+    root = Root()
+    dcel = DCEL()
+    
+    # while Q.all_events:
+    event = Q.all_events.pop(0)
+
+    #if isinstance(event, SiteEvent):
+    handle_site_event(root, event, queue=Q, dcel=dcel )
+    #else:
+    #    handle_circle_event(event, root, Q, dcel)
+
 
     #st.scatter_chart(points)
 

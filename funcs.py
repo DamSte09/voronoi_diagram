@@ -53,6 +53,8 @@ def handle_site_event(root, new_event, queue, dcel):
     
     check_circle_event(right_three_arcs, y_sweep, queue)
     check_circle_event(left_three_arcs, y_sweep, queue)
+    
+    return root, queue, dcel
 
 # as a method?
 def remove_from_queue(leaf, queue):

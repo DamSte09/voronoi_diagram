@@ -1,4 +1,8 @@
 
+class Root:
+    def __init__(self, node=None):
+        self.node = node
+
 class Node:
     """Break point on beachline, keeps 2 sorted centres by x,
       left defines left arc, right - right arc
