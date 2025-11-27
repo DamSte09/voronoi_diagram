@@ -18,12 +18,14 @@ def handle_site_event(root, new_event, queue, dcel):
             root.node = Node(left_point=child.centre, right_point=new_event)
             root.node.left_child = Leaf(child.centre)
             root.node.right_child = Leaf(new_event)
+
         else:
             root.node = Node(left_point=new_event, right_point=child.centre)
             root.node.right_child = Leaf(child.centre)
             root.node.left_child = Leaf(new_event)
 
-        child.parent = root.node
+        root.node.left_child.parent = root.node
+        root.node.right_child.parent = root.node
         dcel.add_face(new_event)
         print("Left point in root node: ", root.node.left_point)
         print("Right point in root node: ", root.node.right_point)
@@ -36,18 +38,22 @@ def handle_site_event(root, new_event, queue, dcel):
     # if arc_above.circle_event is True:
     #     remove_from_queue(arc_above.centre, queue)
     
-    # parent_arc_above = arc_above.parent
+    parent_arc_above = arc_above.parent
     
-    # # Exchanging leaf with arc above with new subtree 
-    # if parent_arc_above.left_child == arc_above:
-    #     arc_above = replace_with_subtree(arc_above, new_event)
-    #     parent_arc_above.left_child = arc_above
-    #     arc_above.parent = parent_arc_above 
-    # elif parent_arc_above.right_child == arc_above:
-    #     arc_above = replace_with_subtree(arc_above, new_event)
-    #     parent_arc_above.right_child = arc_above
-    #     arc_above.parent = parent_arc_above 
-# 
+    # Exchanging leaf with arc above with new subtree 
+    if parent_arc_above.left_child == arc_above:
+        arc_above = replace_with_subtree(arc_above, new_event)
+        parent_arc_above.left_child = arc_above
+    else:
+        arc_above = replace_with_subtree(arc_above, new_event)
+        parent_arc_above.right_child = arc_above 
+
+    arc_above.parent = parent_arc_above
+    print("Left arc of a new subtree root:", arc_above.left_point) 
+    print("Right arc:", arc_above.right_point)
+    print("Middle arc:", arc_above.right_child.left_child.centre)
+
+
     # balance_tree(root)
 # 
     # dcel.add_new_halfedges(new_event, arc_above)
@@ -69,12 +75,11 @@ def find_arc_above(root: Root, point: list):
         x_breakpoint = count_x_breakpoint(curr.left_point, curr.right_point, point[1])
         if x_breakpoint > point[0]:
             curr = curr.left_child
-        elif x_breakpoint  < point[0]:
+        else:
             curr = curr.right_child
-
-    arc_above = curr
-    print(arc_above.centre)
-    return arc_above
+    
+    print(curr.centre)
+    return curr
 
 def count_x_breakpoint(left_centre, right_centre, y_sweep):
     """Counts x breakpoint for node of 2 points and sweepline on new centre"""
@@ -95,6 +100,48 @@ def count_x_breakpoint(left_centre, right_centre, y_sweep):
         return x2_bp
 
     return x1_bp
+
+def replace_with_subtree(arc_above: Leaf, new_centre):
+    """Replaces leaf of arc above new centre with subtree with 3 leafs:
+    arc_above, new_centre, arc_above
+
+    Schema of a subtree:
+        N(a, a)
+        /\
+    L(a) N(p, a)
+          /\
+        L(p) L(a)
+
+    :param arc_above: Contains leaf of an arc above the new centre
+    :param new_centre: New found point by sweep line
+    """
+    left_leaf = Leaf(arc_above.centre)
+    left_leaf.parent = None
+
+    right_leaf = Leaf(arc_above.centre)
+    right_leaf.parent = None
+
+    mid_leaf = Leaf(new_centre)
+
+    # Root of new subtree
+    subtree_root = Node(left_point=left_leaf.centre, right_point=right_leaf.centre)
+    subtree_root.left_child = left_leaf
+    left_leaf.parent = subtree_root
+
+    # Right node of the subtree
+    subtree_root.right_child = Node(left_point=mid_leaf.centre, right_point=right_leaf.centre)
+    subtree_root.right_child.parent = subtree_root
+
+    right_node = subtree_root.right_child
+
+    right_node.left_child = mid_leaf
+    right_node.right_child = right_leaf
+
+    mid_leaf.parent = right_node
+    right_leaf.parent = right_node
+
+    return subtree_root
+
 
 # def balance_tree(root):
 #     pass
@@ -180,46 +227,7 @@ def count_x_breakpoint(left_centre, right_centre, y_sweep):
 #           (Cx**2 + Cy**2)*(Bx - Ax)) / d
 #     return ux, uy
 
-# def replace_with_subtree(arc_above: Leaf, new_centre):
-#     """Replaces leaf of arc above new centre with subtree with 3 leafs: 
-#     arc_above, new_centre, arc_above
-    
-#     Schema of a subtree:
-#         N
-#         /\
-#         L N
-#           /\
-#           L L
 
-#     :param arc_above: Contains leaf of an arc above the new centre
-#     :param new_centre: New found point by sweep line
-#     """
-#     left_leaf = arc_above
-#     left_leaf.parent = None
-
-#     right_leaf = arc_above
-#     right_leaf.parent = None
-
-#     mid_leaf = Leaf(new_centre)
-    
-#     subtree_root = Node(left_point=left_leaf.centre, right_point=right_leaf.centre)
-#     subtree_root.left_child = left_leaf
-#     left_leaf.parent = subtree_root
-
-#     subtree_root.right_child = Node(left_point=mid_leaf.centre, right_point=right_leaf.centre)
-#     subtree_root.right_child.parent = subtree_root
-
-#     node = subtree_root.right_child
-
-#     node.left_child = mid_leaf
-#     node.right_child = right_leaf
-
-#     mid_leaf.parent = node
-#     right_leaf.parent = node
-    
-#     subtree = subtree_root
-
-#     return subtree
     
 
 
