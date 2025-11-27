@@ -20,7 +20,7 @@ def main():
     dcel = DCEL()
     
     # while Q.all_events:
-    for i in range(2):
+    for i in range(3):
         event = Q.all_events.pop(0)
 
     #if isinstance(event, SiteEvent):

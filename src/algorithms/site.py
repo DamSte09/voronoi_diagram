@@ -7,7 +7,7 @@ def handle_site_event(root, new_event, queue, dcel):
     if root.node is None:
         root.node = Leaf(new_event)
         dcel.add_face(new_event)
-        print(root.node.centre)
+        print("First met point: ", root.node.centre)
         return root 
     
     # For second met centre
@@ -25,25 +25,28 @@ def handle_site_event(root, new_event, queue, dcel):
 
         child.parent = root.node
         dcel.add_face(new_event)
-        print(root.node.left_point)
-        print(root.node.right_point)
+        print("Left point in root node: ", root.node.left_point)
+        print("Right point in root node: ", root.node.right_point)
         return root
             
-    # arc_above = find_arc_above(root, new_event)
+    # For third and above met points
+    arc_above = find_arc_above(root, new_event)
+    print(arc_above.centre)
+
     # if arc_above.circle_event is True:
-        # remove_from_queue(arc_above.centre, queue)
-    # 
+    #     remove_from_queue(arc_above.centre, queue)
+    
     # parent_arc_above = arc_above.parent
-    # 
-    # Exchanging leaf with arc above with new subtree 
+    
+    # # Exchanging leaf with arc above with new subtree 
     # if parent_arc_above.left_child == arc_above:
-        # arc_above = replace_with_subtree(arc_above, new_event)
-        # parent_arc_above.left_child = arc_above
-        # arc_above.parent = parent_arc_above 
+    #     arc_above = replace_with_subtree(arc_above, new_event)
+    #     parent_arc_above.left_child = arc_above
+    #     arc_above.parent = parent_arc_above 
     # elif parent_arc_above.right_child == arc_above:
-        # arc_above = replace_with_subtree(arc_above, new_event)
-        # parent_arc_above.right_child = arc_above
-        # arc_above.parent = parent_arc_above 
+    #     arc_above = replace_with_subtree(arc_above, new_event)
+    #     parent_arc_above.right_child = arc_above
+    #     arc_above.parent = parent_arc_above 
 # 
     # balance_tree(root)
 # 
@@ -59,6 +62,40 @@ def handle_site_event(root, new_event, queue, dcel):
     # check_circle_event(right_three_arcs, y_sweep, queue)
     # check_circle_event(left_three_arcs, y_sweep, queue)
     
+def find_arc_above(root: Root, point: list):
+    """Finds arc above new found point by sweepline in BST"""
+    curr = root.node
+    while not isinstance(curr, Leaf):
+        x_breakpoint = count_x_breakpoint(curr.left_point, curr.right_point, point[1])
+        if x_breakpoint > point[0]:
+            curr = curr.left_child
+        elif x_breakpoint  < point[0]:
+            curr = curr.right_child
+
+    arc_above = curr
+    print(arc_above.centre)
+    return arc_above
+
+def count_x_breakpoint(left_centre, right_centre, y_sweep):
+    """Counts x breakpoint for node of 2 points and sweepline on new centre"""
+    x1, y1 = left_centre
+    x2, y2 = right_centre
+
+    a = y2 - y1
+    b = 2*(-y2*x1 + y1*x2 + y_sweep*x1 - y_sweep*x2)
+    c = (y2 - y_sweep)*(x1**2 + y1**2 - y_sweep**2) \
+        - (y1 - y_sweep)*(x2**2 + y2**2 - y_sweep**2)
+
+    delta = b**2 - 4*a*c
+
+    x1_bp = (-b+math.sqrt(delta)) / 2*a
+
+    if x1_bp <0:
+        x2_bp = (-b-math.sqrt(delta)) / 2*a
+        return x2_bp
+
+    return x1_bp
+
 # def balance_tree(root):
 #     pass
 
@@ -186,47 +223,10 @@ def handle_site_event(root, new_event, queue, dcel):
     
 
 
-# def find_arc_above(root = None, point = None):
-#     """Finds arc above new found point by sweepline in BST"""
-#     if root is None:
-#         root = Leaf(point)
-#         return root
-
-#     if isinstance(root, Leaf):
-#         arc_above = root
-#     else:
-#         curr = root
-#         while isinstance(curr, Node):
-#             x_breakpoint = count_x_breakpoint(curr.left_centre, curr.right_centre)
-#             if x_breakpoint > curr.left_point:
-#                 curr = curr.left_child
-#             elif x_breakpoint  < curr.right_point:
-#                 curr = curr.right_child
-        
-#         arc_above = curr
-
-#     return arc_above
 
 
-# def count_x_breakpoint(left_centre, right_centre, y_sweep):
-#     """Counts x breakpoint for node of 2 points and sweepline on new centre"""
-#     x1, y1 = left_centre
-#     x2, y2 = right_centre
-    
-#     a = y2 - y1
-#     b = 2(-y2*x1 + y1*x2 + y_sweep*x1 - y_sweep*x2)
-#     c = (y2 - y_sweep)*(x1**2 + y1**2 - y_sweep**2) \
-#         - (y1 - y_sweep)*(x2**2 + y2**2 - y_sweep**2)
-        
-#     delta = b**2 - 4*a*c
 
-#     x1_bp = (-b+math.sqrt(delta)) / 2*a
 
-#     if x1_bp <0:
-#         x2_bp = (-b-math.sqrt(delta)) / 2*a
-#         return x2_bp
-
-#     return x1_bp
 
 # def remove_from_queue(leaf, queue):
 #     """Removes event from queue"""
