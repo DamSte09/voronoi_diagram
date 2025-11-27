@@ -2,8 +2,8 @@ from src.utils.points import readPointsFromFile
 from src.structures.QE import EventsQueue, SiteEvent, CircleEvent
 from src.structures.BST import Root, Node, Leaf
 from src.structures.DCEL import DCEL, Vertex, HalfEdge, Face
-from funcs import handle_site_event
-from src.algorithms.circle import handle_circle_event
+from src.algorithms.site import handle_site_event
+#from src.algorithms.circle import handle_circle_event
 
 
 import streamlit as st
@@ -20,10 +20,11 @@ def main():
     dcel = DCEL()
     
     # while Q.all_events:
-    event = Q.all_events.pop(0)
+    for i in range(2):
+        event = Q.all_events.pop(0)
 
     #if isinstance(event, SiteEvent):
-    handle_site_event(root, event, queue=Q, dcel=dcel )
+        root = handle_site_event(root, event, queue=Q, dcel=dcel )
     #else:
     #    handle_circle_event(event, root, Q, dcel)
 

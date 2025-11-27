@@ -1,7 +1,7 @@
 import math
 
 class DCEL:
-    def __init__(self, points):
+    def __init__(self):
         self.vertices = []
         self.half_edges = []
         self.faces = []
