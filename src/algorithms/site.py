@@ -1,51 +1,54 @@
 from src.structures.BST import Leaf, Node, Root
-from src.structures.QE import CircleEvent
+from src.structures.QE import CircleEvent, SiteEvent, EventsQueue
+from src.structures.DCEL import DCEL, HalfEdge, Vertex, Face
 import math
 
-def handle_site_event(root, new_event, queue, dcel):
+def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel: DCEL):
     # 1. step, when BST is empty
     if root.node is None:
-        root.node = Leaf(new_event)
-        dcel.add_face(new_event)
-        print("First met point: ", root.node.centre)
+        root.node = Leaf(new_event.centre)
+        dcel.add_face(new_event.centre)
+        print("First met event: ", root.node.centre)
         return root 
     
-    # For second met centre
+    # For second met event
     if isinstance(root.node, Leaf):
         child = root.node
+        new_point = new_event.centre
 
-        if child.centre[0] < new_event[0]:
-            root.node = Node(left_point=child.centre, right_point=new_event)
+        if child.centre[0] < new_point[0]:
+            root.node = Node(left_point=child.centre, right_point=new_point)
             root.node.left_child = Leaf(child.centre)
-            root.node.right_child = Leaf(new_event)
+            root.node.right_child = Leaf(new_point)
 
         else:
-            root.node = Node(left_point=new_event, right_point=child.centre)
+            root.node = Node(left_point=new_point, right_point=child.centre)
             root.node.right_child = Leaf(child.centre)
-            root.node.left_child = Leaf(new_event)
+            root.node.left_child = Leaf(new_point)
 
         root.node.left_child.parent = root.node
         root.node.right_child.parent = root.node
-        dcel.add_face(new_event)
+        dcel.add_face(new_point)
         print("Left point in root node: ", root.node.left_point)
         print("Right point in root node: ", root.node.right_point)
+        print("Faces in DCEL: ", [p.centre for p in dcel.faces])
         return root
             
     # For third and above met points
-    arc_above = find_arc_above(root, new_event)
-    print(arc_above.centre)
+    arc_above = find_arc_above(root, new_event.centre)
+    print("Point of arc_above: ", arc_above.centre)
 
-    # if arc_above.circle_event is True:
-    #     remove_from_queue(arc_above.centre, queue)
+    #if arc_above.circle_event is True:
+    #    remove_from_queue(arc_above.centre, queue)
     
     parent_arc_above = arc_above.parent
     
     # Exchanging leaf with arc above with new subtree 
     if parent_arc_above.left_child == arc_above:
-        arc_above = replace_with_subtree(arc_above, new_event)
+        arc_above = replace_with_subtree(arc_above, new_event.centre)
         parent_arc_above.left_child = arc_above
     else:
-        arc_above = replace_with_subtree(arc_above, new_event)
+        arc_above = replace_with_subtree(arc_above, new_event.centre)
         parent_arc_above.right_child = arc_above 
 
     arc_above.parent = parent_arc_above
@@ -55,8 +58,8 @@ def handle_site_event(root, new_event, queue, dcel):
 
 
     # balance_tree(root)
-# 
-    # dcel.add_new_halfedges(new_event, arc_above)
+    dcel.add_face(new_event.centre)
+    dcel.add_site_halfedges(new_event, arc_above)
     # 
     # left_neighbour = predecessor(arc_above.left_child)
     # right_neighbour = successor(arc_above.right_child.right_child)
@@ -101,7 +104,7 @@ def count_x_breakpoint(left_centre, right_centre, y_sweep):
 
     return x1_bp
 
-def replace_with_subtree(arc_above: Leaf, new_centre):
+def replace_with_subtree(arc_above: Leaf, new_centre: list):
     """Replaces leaf of arc above new centre with subtree with 3 leafs:
     arc_above, new_centre, arc_above
 

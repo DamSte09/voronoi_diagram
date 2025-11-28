@@ -8,9 +8,9 @@ class EventsQueue:
         self.circle_events = [] 
         
         for point in self.points:
-            self.all_events.append(SiteEvent(point))
+            self.site_events.append(SiteEvent(point))
 
-        self.all_events = sorted(self.points, key = lambda point:point[1], reverse=True)
+        self.all_events = sorted(self.site_events, key = lambda event:event.centre[1], reverse=True)
         
     def inicialize_queue(self):
         """Initialize queue by filling up with upcoming site_events and sorts them descending by y"""

@@ -1,4 +1,5 @@
 import math
+from src.structures.BST import Node
 
 class DCEL:
     def __init__(self):
@@ -14,7 +15,7 @@ class DCEL:
         face_j = Face(new_centre)
         self.faces.append(face_j)
     
-    def add_halfedges_site(self, new_centre, new_subtree):
+    def add_site_halfedges(self, new_centre: list, new_subtree: Node):
         """Adds records of new halfedges to DCEL into list of halfedges.
         
         :param new_centre: New met point by sweep 
@@ -28,8 +29,12 @@ class DCEL:
         e_ji.twin = e_ij
         e_ij.twin = e_ji
 
-        face_j = next((f for f in self.faces if f.site == p_j), None)
-        face_i = Face(p_i)
+        face_j = next((f for f in self.faces if f.centre == p_j), None)
+        face_i = next((f for f in self.faces if f.centre == p_i), None)
+
+        if face_i is None:  
+            face_i = Face(p_i)  
+            self.faces.append(face_i)   
 
         e_ij.face = face_i
         e_ji.face = face_j
@@ -134,10 +139,10 @@ class Vertex:
 
 
 class Face:
-    def __init__(self, site):
+    def __init__(self, centre):
         self.outer_component = None
         self.inner_component = None
-        self.site = site 
+        self.centre = centre
 
 
 class HalfEdge:

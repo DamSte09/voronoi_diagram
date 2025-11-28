@@ -22,6 +22,7 @@ def main():
     # while Q.all_events:
     for i in range(3):
         event = Q.all_events.pop(0)
+        print("New event point:", event.centre)
 
     #if isinstance(event, SiteEvent):
         root = handle_site_event(root, event, queue=Q, dcel=dcel )
