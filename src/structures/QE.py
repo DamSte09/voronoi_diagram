@@ -71,6 +71,6 @@ class SiteEvent:
 
 
 class CircleEvent:
-    def __init__(self, point):
+    def __init__(self, point: list, node_pointer):
         self.centre = point
         self.node_pointer = None

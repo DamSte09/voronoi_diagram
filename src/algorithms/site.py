@@ -38,8 +38,8 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
     arc_above = find_arc_above(root, new_event.centre)
     print("Point of arc_above: ", arc_above.centre)
 
-    #if arc_above.circle_event is True:
-    #    remove_from_queue(arc_above.centre, queue)
+    # if arc_above.circle_event is True:
+    #     remove_from_queue(arc_above.centre, queue)
     
     parent_arc_above = arc_above.parent
     
@@ -68,17 +68,19 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
     left_neighbour = predecessor(arc_above.left_child)
     right_neighbour = successor(arc_above.right_child.right_child)
 
-    print("left neighbour: ", left_neighbour)
+    print("left neighbour: ", left_neighbour.centre)
     print("right neighbour: ", right_neighbour)
-    
+
     if left_neighbour and right_neighbour:
         left_three_arcs = [left_neighbour,arc_above.left_child, arc_above.right_child.left_child]
         right_three_arcs = [arc_above.right_child.left_child, arc_above.right_child.right_child, right_neighbour]
-        y_sweep = new_event[1]
+        y_sweep = new_event.centre[1]
 
         check_circle_event(right_three_arcs, y_sweep, queue)
         check_circle_event(left_three_arcs, y_sweep, queue)
     
+    return root
+
 def find_arc_above(root: Root, point: list):
     """Finds arc above new found point by sweepline in BST"""
     curr = root.node
@@ -190,7 +192,7 @@ def successor(leaf: Leaf) -> Leaf | None:
 
     return curr
 
-def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep, queue):
+def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep: float, queue: EventsQueue):
     """Checks if 3 given points are on one circle
     
     :param three_next_leafs: List of 3 next leafs
@@ -205,11 +207,10 @@ def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep, queue)
     det = (B[0] - A[0])*(C[1] - A[1]) - (B[1] - A[1])*(C[0] - A[0])
 
     if abs(det)< EPS:
-        print("No circle event, points are collinear")
+        print("Points are collinear")
         return None
     
     # Counting centre of a circle
-    
     ux, uy = circle_center(A, B, C)
     r = math.sqrt( ( ux - A[0] ) ** 2 + (uy - A[1])**2)
     event_y = uy - r # lowest point of circle

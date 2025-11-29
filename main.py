@@ -20,8 +20,9 @@ def main():
     dcel = DCEL()
     
     # while Q.all_events:
-    for i in range(3):
+    for i in range(4):
         event = Q.all_events.pop(0)
+        print('\n\n')
         print("New event point:", event.centre)
 
     #if isinstance(event, SiteEvent):
