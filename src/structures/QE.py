@@ -60,9 +60,11 @@ class EventsQueue:
 
         self.all_events.insert(i, event)
 
-    def remove_circle_event(self, leaf: Leaf):
-        if leaf.circle_event is True:
-            self.all_events.remove(leaf.circle_event)
+    def remove_from_queue(self, event):
+        try:
+            self.all_events.remove(event)
+        except ValueError:
+            pass
 
         
 class SiteEvent:

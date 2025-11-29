@@ -4,11 +4,11 @@ from src.structures.DCEL import DCEL, HalfEdge, Vertex, Face
 import math
 
 def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel: DCEL):
-    dcel.add_face(new_event.centre)
 
     # 1. step, when BST is empty
     if root.node is None:
         root.node = Leaf(new_event.centre)
+        dcel.add_face(new_event.centre)
         print("First met event: ", root.node.centre)
         return root 
     
@@ -21,7 +21,6 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
             root.node = Node(left_point=child.centre, right_point=new_point)
             root.node.left_child = Leaf(child.centre)
             root.node.right_child = Leaf(new_point)
-
         else:
             root.node = Node(left_point=new_point, right_point=child.centre)
             root.node.right_child = Leaf(child.centre)
@@ -31,15 +30,20 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
         root.node.right_child.parent = root.node
         print("Left point in root node: ", root.node.left_point)
         print("Right point in root node: ", root.node.right_point)
+        dcel.add_face(new_event.centre)
+
         print("Faces in DCEL: ", [p.centre for p in dcel.faces])
         return root
             
     # For third and above met points
     arc_above = find_arc_above(root, new_event.centre)
     print("arc above: ", arc_above.centre)
+ 
+    dcel.add_face(new_event.centre)
 
-    # if arc_above.circle_event is True:
-        # remove_from_queue(arc_above.centre, queue)
+    if arc_above.circle_event is not None:
+        queue.remove_from_queue(arc_above.circle_event)
+        arc_above.circle_event = None
     
     parent_arc_above = arc_above.parent
 
@@ -50,7 +54,7 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
         root.node = new_subtree
         new_subtree.parent = None
     else:
-        if parent_arc_above.left_child == new_subtree:
+        if parent_arc_above.left_child == arc_above:
             parent_arc_above.left_child = new_subtree
         else:
             parent_arc_above.right_child = new_subtree 
@@ -60,9 +64,6 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
     print("Left arc of a new subtree root:", new_subtree.left_point) 
     print("Middle arc:", new_subtree.right_child.left_child.centre)
     print("Right arc:", new_subtree.right_point)
-
-
-    # balance_tree(root)
 
     dcel.add_site_halfedges(new_event.centre, new_subtree)
 
@@ -253,18 +254,3 @@ def circle_center(A, B, C):
 
 
     
-
-
-
-
-
-
-
-# def remove_from_queue(leaf, queue):
-#     """Removes event from queue"""
-#     all_ce = queue.circle_events
-#     if leaf.circle_event is True:
-#         all_ce.remove(leaf.circle_event)        
-                         
-#     queue.circle_events = all_ce 
-#     return queue
