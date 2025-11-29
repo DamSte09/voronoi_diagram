@@ -4,10 +4,11 @@ from src.structures.DCEL import DCEL, HalfEdge, Vertex, Face
 import math
 
 def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel: DCEL):
+    dcel.add_face(new_event.centre)
+
     # 1. step, when BST is empty
     if root.node is None:
         root.node = Leaf(new_event.centre)
-        dcel.add_face(new_event.centre)
         print("First met event: ", root.node.centre)
         return root 
     
@@ -28,7 +29,6 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
 
         root.node.left_child.parent = root.node
         root.node.right_child.parent = root.node
-        dcel.add_face(new_point)
         print("Left point in root node: ", root.node.left_point)
         print("Right point in root node: ", root.node.right_point)
         print("Faces in DCEL: ", [p.centre for p in dcel.faces])
@@ -36,44 +36,57 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
             
     # For third and above met points
     arc_above = find_arc_above(root, new_event.centre)
-    print("Point of arc_above: ", arc_above.centre)
+    print("arc above: ", arc_above.centre)
 
     # if arc_above.circle_event is True:
     #     remove_from_queue(arc_above.centre, queue)
     
     parent_arc_above = arc_above.parent
-    
-    # Exchanging leaf with arc above with new subtree 
-    if parent_arc_above.left_child == arc_above:
-        arc_above = replace_with_subtree(arc_above, new_event.centre)
-        parent_arc_above.left_child = arc_above
-    else:
-        arc_above = replace_with_subtree(arc_above, new_event.centre)
-        parent_arc_above.right_child = arc_above 
 
-    arc_above.parent = parent_arc_above
-    print("Left arc of a new subtree root:", arc_above.left_point) 
-    print("Right arc:", arc_above.right_point)
-    print("Middle arc:", arc_above.right_child.left_child.centre)
+    # Exchanging leaf with arc above with new subtree
+    new_subtree = replace_with_subtree(arc_above, new_event.centre)
+
+    if parent_arc_above is None:
+        root.node = new_subtree
+        new_subtree.parent = None
+    else:
+        if parent_arc_above.left_child == new_subtree:
+            parent_arc_above.left_child = new_subtree
+        else:
+            parent_arc_above.right_child = new_subtree 
+
+        new_subtree.parent = parent_arc_above
+
+    print("Left arc of a new subtree root:", new_subtree.left_point) 
+    print("Middle arc:", new_subtree.right_child.left_child.centre)
+    print("Right arc:", new_subtree.right_point)
 
 
     # balance_tree(root)
-    dcel.add_face(new_event.centre)
-    dcel.add_site_halfedges(new_event.centre, arc_above)
+
+    dcel.add_site_halfedges(new_event.centre, new_subtree)
 
     # Duplikują się faces - trzeba naprawić
     print("DCEL faces after added halfedges:", [p.centre for p in dcel.faces])
     print("DCEL halfedges:", dcel.half_edges)
     
-    left_neighbour = predecessor(arc_above.left_child)
-    right_neighbour = successor(arc_above.right_child.right_child)
+    left_neighbour = predecessor(new_subtree.left_child)
+    right_neighbour = successor(new_subtree.right_child.right_child)
 
     print("left neighbour: ", left_neighbour.centre)
     print("right neighbour: ", right_neighbour)
 
     if left_neighbour and right_neighbour:
-        left_three_arcs = [left_neighbour,arc_above.left_child, arc_above.right_child.left_child]
-        right_three_arcs = [arc_above.right_child.left_child, arc_above.right_child.right_child, right_neighbour]
+        left_three_arcs = [
+            left_neighbour,
+            new_subtree.left_child,
+            new_subtree.right_child.left_child,
+        ]
+        right_three_arcs = [
+            new_subtree.right_child.left_child,
+            new_subtree.right_child.right_child,
+            right_neighbour,
+        ]
         y_sweep = new_event.centre[1]
 
         check_circle_event(right_three_arcs, y_sweep, queue)

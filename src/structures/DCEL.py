@@ -1,6 +1,30 @@
 import math
 from src.structures.BST import Node
 
+
+class Vertex:
+    def __init__(self, point: list):
+        self.x = point[0]
+        self.y = point[1]
+        self.incident_edge = []
+
+
+class Face:
+    def __init__(self, centre):
+        self.outer_component = None
+        self.inner_component = None
+        self.centre = centre
+
+
+class HalfEdge:
+    def __init__(self):
+        self.origin = None  # poczatek
+        self.twin = None
+        self.face = None
+        self.next = None
+        self.prev = None
+
+
 class DCEL:
     def __init__(self):
         self.vertices = []
@@ -14,11 +38,12 @@ class DCEL:
         """
         for f in self.faces:
             if f.centre == new_centre:
-                face_j = Face(new_centre)
-                self.faces.append(face_j)
-                return face_j
-            
-        return None
+                return f
+
+        face_j = Face(new_centre)
+        self.faces.append(face_j)
+        return face_j
+
     
     def add_site_halfedges(self, new_centre: list, new_subtree: Node):
         """Adds records of new halfedges to DCEL into list of halfedges.
@@ -138,27 +163,4 @@ class DCEL:
 
 
 
-class Vertex:
-    def __init__(self, point:list):
-        self.x = point[0] 
-        self.y = point[1] 
-        self.incident_edge = [] 
 
-
-class Face:
-    def __init__(self, centre):
-        self.outer_component = None
-        self.inner_component = None
-        self.centre = centre
-
-
-class HalfEdge:
-    def __init__(self):
-        self.origin = None  # poczatek
-        self.twin = None
-        self.face = None
-        self.next = None
-        self.prev = None 
-
-
-        
