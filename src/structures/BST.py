@@ -99,10 +99,6 @@ class Leaf:
         self.parent = None
         self.circle_event = None
 
-   
-            
-
-
 def successor(leaf: Leaf) -> Leaf | None:
     curr = leaf
 
