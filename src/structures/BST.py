@@ -3,6 +3,23 @@ class Root:
     def __init__(self, node=None):
         self.node = node
 
+    def show_in_order_leafs(self):
+        all_leafs = []
+        curr = self.node
+        while isinstance(curr, Node):
+            curr = curr.left_child
+        first_leaf = curr
+        succ = successor(first_leaf)
+        all_leafs.extend([first_leaf, succ])
+        while succ is not None:
+            succ = successor(succ)
+            if succ is None:
+                break
+            all_leafs.append(succ)
+        
+        print("All centres from leaves: ", [leaf.centre for leaf in all_leafs])
+
+
 class Node:
     """Break point on beachline, keeps 2 sorted centres by x,
       left defines left arc, right - right arc
@@ -86,3 +103,18 @@ class Leaf:
             
 
 
+def successor(leaf: Leaf) -> Leaf | None:
+    curr = leaf
+
+    while curr.parent and curr == curr.parent.right_child:
+        curr = curr.parent
+
+    if not curr.parent:
+        return None
+
+    curr = curr.parent.right_child
+
+    while isinstance(curr, Node):
+        curr = curr.left_child
+
+    return curr

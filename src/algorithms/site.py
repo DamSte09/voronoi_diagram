@@ -39,7 +39,7 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
     print("arc above: ", arc_above.centre)
 
     # if arc_above.circle_event is True:
-    #     remove_from_queue(arc_above.centre, queue)
+        # remove_from_queue(arc_above.centre, queue)
     
     parent_arc_above = arc_above.parent
 
@@ -91,7 +91,7 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
 
         check_circle_event(right_three_arcs, y_sweep, queue)
         check_circle_event(left_three_arcs, y_sweep, queue)
-    
+    root.show_in_order_leafs()
     return root
 
 def find_arc_above(root: Root, point: list):
@@ -104,7 +104,6 @@ def find_arc_above(root: Root, point: list):
         else:
             curr = curr.right_child
     
-    print(curr.centre)
     return curr
 
 def count_x_breakpoint(left_centre, right_centre, y_sweep):

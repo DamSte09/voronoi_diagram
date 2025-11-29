@@ -31,7 +31,7 @@ class DCEL:
         self.half_edges = []
         self.faces = []
     
-    def add_face(self, new_centre: list) -> Face | None:
+    def add_face(self, new_centre: list) -> Face:
         """Create face record and appends to list of faces in DCEL
         
         :param new_centre: New met point by sweep
@@ -43,7 +43,6 @@ class DCEL:
         face_j = Face(new_centre)
         self.faces.append(face_j)
         return face_j
-
     
     def add_site_halfedges(self, new_centre: list, new_subtree: Node):
         """Adds records of new halfedges to DCEL into list of halfedges.
@@ -61,17 +60,12 @@ class DCEL:
         e_ji.twin = e_ij
         e_ij.twin = e_ji
 
-        face_j = next((f for f in self.faces if f.centre == p_j), None)
-        face_i = next((f for f in self.faces if f.centre == p_i), None)
-
-        if face_i is None:  
-            face_i = Face(p_i)  
-            self.faces.append(face_i)   
+        face_j = self.add_face(p_j)
+        face_i = self.add_face(p_i)
 
         e_ij.face = face_i
         e_ji.face = face_j
         
-        self.faces.append(face_i)
         self.half_edges.extend([e_ji, e_ij])
         
     def bound_area(self):

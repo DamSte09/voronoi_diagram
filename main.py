@@ -20,13 +20,13 @@ def main():
     dcel = DCEL()
     
     # while Q.all_events:
-    for i in range(4):
+    for i in range(6):
         event = Q.all_events.pop(0)
         print('\n\n')
         print("New event point:", event.centre)
 
-    #if isinstance(event, SiteEvent):
-        root = handle_site_event(root, event, queue=Q, dcel=dcel )
+        if isinstance(event, SiteEvent):
+            root = handle_site_event(root, event, queue=Q, dcel=dcel )
     #else:
     #    handle_circle_event(event, root, Q, dcel)
 
