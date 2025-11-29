@@ -22,7 +22,9 @@ class DCEL:
         :param new_subtree: Subree made from arc above and new point
         """
         p_i = new_centre
+        print("p_i: ", p_i)
         p_j = new_subtree.left_child.centre
+        print("p_j: ", p_j)
 
         e_ji = HalfEdge()
         e_ij = HalfEdge()

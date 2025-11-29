@@ -59,17 +59,25 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
 
     # balance_tree(root)
     dcel.add_face(new_event.centre)
-    dcel.add_site_halfedges(new_event, arc_above)
-    # 
-    # left_neighbour = predecessor(arc_above.left_child)
-    # right_neighbour = successor(arc_above.right_child.right_child)
-# 
-    # left_three_arcs = [left_neighbour,arc_above.left_child, arc_above.right_child.left_child]
-    # right_three_arcs = [arc_above.right_child.left_child, arc_above.right_child.right_child, right_neighbour]
-    # y_sweep = new_event[1]
-    # 
-    # check_circle_event(right_three_arcs, y_sweep, queue)
-    # check_circle_event(left_three_arcs, y_sweep, queue)
+    dcel.add_site_halfedges(new_event.centre, arc_above)
+
+    # Duplikują się faces - trzeba naprawić
+    print("DCEL faces after added halfedges:", [p.centre for p in dcel.faces])
+    print("DCEL halfedges:", dcel.half_edges)
+    
+    left_neighbour = predecessor(arc_above.left_child)
+    right_neighbour = successor(arc_above.right_child.right_child)
+
+    print("left neighbour: ", left_neighbour)
+    print("right neighbour: ", right_neighbour)
+    
+    if left_neighbour and right_neighbour:
+        left_three_arcs = [left_neighbour,arc_above.left_child, arc_above.right_child.left_child]
+        right_three_arcs = [arc_above.right_child.left_child, arc_above.right_child.right_child, right_neighbour]
+        y_sweep = new_event[1]
+
+        check_circle_event(right_three_arcs, y_sweep, queue)
+        check_circle_event(left_three_arcs, y_sweep, queue)
     
 def find_arc_above(root: Root, point: list):
     """Finds arc above new found point by sweepline in BST"""
@@ -146,89 +154,89 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list):
     return subtree_root
 
 
-# def balance_tree(root):
-#     pass
+def balance_tree(root):
+    pass
 
-# def predecessor(leaf):
-#     curr = leaf
+def predecessor(leaf: Leaf) -> Leaf | None:
+    curr = leaf
 
-#     while curr.parent and curr == curr.parent.left_child:
-#         curr = curr.parent
+    while curr.parent and curr == curr.parent.left_child:
+        curr = curr.parent
 
-#     if not curr.parent:
-#         return None
+    if not curr.parent:
+        return None
 
-#     curr = curr.parent.left_child
+    curr = curr.parent.left_child
 
-#     while isinstance(curr, Node):
-#         curr = curr.right_child
+    while isinstance(curr, Node):
+        curr = curr.right_child
 
-#     return curr
+    return curr
 
 
-# def successor(leaf):
-#     curr = leaf
+def successor(leaf: Leaf) -> Leaf | None:
+    curr = leaf
 
-#     while curr.parent and curr == curr.parent.right_child:
-#         curr = curr.parent
+    while curr.parent and curr == curr.parent.right_child:
+        curr = curr.parent
 
-#     if not curr.parent:
-#         return None
+    if not curr.parent:
+        return None
 
-#     curr = curr.parent.right_child
+    curr = curr.parent.right_child
 
-#     while isinstance(curr, Node):
-#         curr = curr.left_child
+    while isinstance(curr, Node):
+        curr = curr.left_child
 
-#     return curr
+    return curr
 
-# def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep, queue):
-#     """Checks if 3 given points are on one circle
+def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep, queue):
+    """Checks if 3 given points are on one circle
     
-#     :param three_next_leafs: List of 3 next leafs
-#     """
-#     a, b, c = three_next_leafs
-#     A = a.centre
-#     B = b.centre
-#     C = c.centre
+    :param three_next_leafs: List of 3 next leafs
+    """
+    a, b, c = three_next_leafs
+    A = a.centre
+    B = b.centre
+    C = c.centre
     
-#     # Are points are collinear
-#     EPS = 1e-9
-#     det = (B[0] - A[0])*(C[1] - A[1]) - (B[1] - A[1])*(C[0] - A[0])
+    # Are points are collinear
+    EPS = 1e-9
+    det = (B[0] - A[0])*(C[1] - A[1]) - (B[1] - A[1])*(C[0] - A[0])
 
-#     if abs(det)< EPS:
-#         print("No circle event, points are collinear")
-#         return None
+    if abs(det)< EPS:
+        print("No circle event, points are collinear")
+        return None
     
-#     # Counting centre of a circle
+    # Counting centre of a circle
     
-#     ux, uy = circle_center(A, B, C)
-#     r = math.sqrt( ( ux - A[0] ) ** 2 + (uy - A[1])**2)
-#     event_y = uy - r # lowest point of circle
+    ux, uy = circle_center(A, B, C)
+    r = math.sqrt( ( ux - A[0] ) ** 2 + (uy - A[1])**2)
+    event_y = uy - r # lowest point of circle
     
-#     # Condition that that event cannot be higher than y_sweep
-#     if event_y >= y_sweep:
-#         return None
+    # Condition that that event cannot be higher than y_sweep
+    if event_y >= y_sweep:
+        return None
 
-#     # Adding middle point as a pointer, bc middle arc will be the one which dissapears
-#     event = CircleEvent([ux, event_y], b)
-#     b.circle_event = event
+    # Adding middle point as a pointer, bc middle arc will be the one which dissapears
+    event = CircleEvent([ux, event_y], b)
+    b.circle_event = event
 
-#     queue.insert_event(event)
+    queue.insert_event(event)
     
-# def circle_center(A, B, C):
-#     Ax, Ay = A
-#     Bx, By = B
-#     Cx, Cy = C
-#     d = 2 * (Ax * (By - Cy) + Bx * (Cy - Ay) + Cx * (Ay - By))
+def circle_center(A, B, C):
+    Ax, Ay = A
+    Bx, By = B
+    Cx, Cy = C
+    d = 2 * (Ax * (By - Cy) + Bx * (Cy - Ay) + Cx * (Ay - By))
 
-#     ux = ((Ax**2 + Ay**2)*(By - Cy) +
-#           (Bx**2 + By**2)*(Cy - Ay) +
-#           (Cx**2 + Cy**2)*(Ay - By)) / d
-#     uy = ((Ax**2 + Ay**2)*(Cx - Bx) +
-#           (Bx**2 + By**2)*(Ax - Cx) +
-#           (Cx**2 + Cy**2)*(Bx - Ax)) / d
-#     return ux, uy
+    ux = ((Ax**2 + Ay**2)*(By - Cy) +
+          (Bx**2 + By**2)*(Cy - Ay) +
+          (Cx**2 + Cy**2)*(Ay - By)) / d
+    uy = ((Ax**2 + Ay**2)*(Cx - Bx) +
+          (Bx**2 + By**2)*(Ax - Cx) +
+          (Cx**2 + Cy**2)*(Bx - Ax)) / d
+    return ux, uy
 
 
     
