@@ -91,7 +91,7 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
 
         check_circle_event(right_three_arcs, y_sweep, queue)
         check_circle_event(left_three_arcs, y_sweep, queue)
-    root.show_in_order_leafs()
+    root.show_all_leafs()
     return root
 
 def find_arc_above(root: Root, point: list):

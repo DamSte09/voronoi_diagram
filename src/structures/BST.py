@@ -3,7 +3,7 @@ class Root:
     def __init__(self, node=None):
         self.node = node
 
-    def show_in_order_leafs(self):
+    def show_all_leafs(self):
         all_leafs = []
         curr = self.node
         while isinstance(curr, Node):
