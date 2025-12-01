@@ -236,7 +236,8 @@ def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep: float,
         return None
 
     # Adding middle point as a pointer, bc middle arc will be the one which dissapears
-    event = CircleEvent([ux, event_y], b)
+    point = [ux, event_y]
+    event = CircleEvent(point= point, leaf_pointer=b)
     b.circle_event = event
 
     queue.insert_event(event)

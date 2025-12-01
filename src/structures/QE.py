@@ -46,19 +46,9 @@ class EventsQueue:
         self.circle_events = all_ce
 
     def insert_event(self, event):
-        i = 0
-        while i < len(self.all_events):
-            current = self.all_events[i]
+        self.all_events.append(event)
+        self.all_events.sort(key=lambda event:event.centre[1], reverse=True)
 
-            if event.centre[1] > current.centre[1]:
-                break
-            elif event.centre[1] == current.centre[1]:
-                if type(event).__name__ == "SiteEvent" and type(current).__name__ == "CircleEvent":
-                    break
-
-            i += 1
-
-        self.all_events.insert(i, event)
 
     def remove_from_queue(self, event):
         try:
@@ -73,6 +63,6 @@ class SiteEvent:
 
 
 class CircleEvent:
-    def __init__(self, point: list, node_pointer):
+    def __init__(self, point: list, leaf_pointer: Leaf):
         self.centre = point
-        self.node_pointer = None
+        self.leaf_pointer = leaf_pointer
