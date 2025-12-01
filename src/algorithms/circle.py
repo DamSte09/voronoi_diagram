@@ -9,7 +9,7 @@ def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
     left_leaf = predecessor(y)
     right_leaf = successor(y)
 
-    if not left_leaf or not right_leaf:
+    if left_leaf is None or right_leaf is None:
         return root
     
     A = left_leaf.centre
@@ -25,7 +25,7 @@ def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
 
     if cc is None or any(math.isinf(c) or math.isnan(c) for c in cc):
         print("Circle center does not exist")
-        return None
+        return root
     
     V_cc = Vertex(cc)
     dcel.vertices.append(V_cc)
@@ -49,9 +49,11 @@ def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
 
     new_het.next = h_right
     h_right.prev = new_het
-    
-    new_he.face = h_left.face
-    new_het.face = h_right.face
+
+    if hasattr(h_left, "face"):
+        new_he.face = h_left.face
+    if hasattr(h_right, "face"):
+        new_het.face = h_right.face
 
     dcel.half_edges.append(new_he)
     dcel.half_edges.append(new_het)
@@ -59,7 +61,10 @@ def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
     queue.remove_circle_event(y)
 
     for neighbor in (left_leaf, right_leaf):
-        if neighbor.circle_event == y.circle_event:
+        if (
+            getattr(neighbor, "circle_event", None) is not None
+            and neighbor.circle_event is y.circle_event
+        ):
             queue.remove_circle_event(neighbor)
             neighbor.circle_event = None
 
@@ -67,19 +72,6 @@ def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
     check_circle_event(predecessor(left_leaf), left_leaf, right_leaf)
 
     return root
-
-    if hasattr(left_leaf, "face") and left_leaf.face is not None:
-        e_lr.face = left_leaf.face
-    else:
-        e_lr.face = getattr(e_old_left, "face", None)
-
-    if hasattr(right_leaf, "face") and right_leaf.face is not None:
-        e_rl.face = right_leaf.face
-    else:
-        e_rl.face = getattr(e_old_right, "face", None)
-
-    dcel.half_edges.extend([e_lr, e_rl])
-
 
 
     
