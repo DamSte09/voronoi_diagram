@@ -66,7 +66,11 @@ class DCEL:
         e_ij.face = face_i
         e_ji.face = face_j
         
+        new_subtree.half_edge = e_ji
+        new_subtree.right_child.half_edge = e_ij
+        
         self.half_edges.extend([e_ji, e_ij])
+        return new_subtree
         
     def bound_area(self):
         min_x = min(p[0] for p in self.points)

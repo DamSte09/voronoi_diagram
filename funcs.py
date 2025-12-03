@@ -122,7 +122,10 @@ def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep, queue)
     
     # Counting centre of a circle
     
-    ux, uy = circle_center(A, B, C)
+    cc = circle_center(A, B, C)
+    if cc is None or any(math.isinf(c) or math.isnan(c) for c in cc):
+        return None
+    ux, uy = cc
     r = math.sqrt( ( ux - A[0] ) ** 2 + (uy - A[1])**2)
     event_y = uy - r # lowest point of circle
     
@@ -144,7 +147,8 @@ def circle_center(A, B, C):
     Bx, By = B
     Cx, Cy = C
     d = 2 * (Ax * (By - Cy) + Bx * (Cy - Ay) + Cx * (Ay - By))
-
+    if d <= 1e-9:
+        return None
     ux = ((Ax**2 + Ay**2)*(By - Cy) +
           (Bx**2 + By**2)*(Cy - Ay) +
           (Cx**2 + Cy**2)*(Ay - By)) / d
@@ -264,16 +268,16 @@ def intersect_ray_with_box(origin, direction, box):
 
 
 
-for face in dcel.faces:
-    he = face.outer_component
-    start = he
-    vertices = []
-    while True:
-        vertices.append((he.origin.x, he.origin.y))
-        he = he.next
-        if he == start:
-            break
-    xs, ys = zip(*vertices)
-    plt.fill(xs, ys, edgecolor="black", fill=False)  # tylko krawędzie
-plt.show()
+# for face in dcel.faces:
+#     he = face.outer_component
+#     start = he
+#     vertices = []
+#     while True:
+#         vertices.append((he.origin.x, he.origin.y))
+#         he = he.next
+#         if he == start:
+#             break
+#     xs, ys = zip(*vertices)
+#     plt.fill(xs, ys, edgecolor="black", fill=False)  # tylko krawędzie
+# plt.show()
 

@@ -16,6 +16,8 @@ def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
     B = y.centre
     C = right_leaf.centre
     
+    y_sweep = y.centre[1]
+
     bp = y.parent
     print(f"A: {A}, B: {B}, C:{C}")
 
@@ -58,18 +60,23 @@ def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
     dcel.half_edges.append(new_he)
     dcel.half_edges.append(new_het)
 
-    queue.remove_circle_event(y)
+    queue.remove_from_queue(y)
 
     for neighbor in (left_leaf, right_leaf):
         if (
             getattr(neighbor, "circle_event", None) is not None
             and neighbor.circle_event is y.circle_event
         ):
-            queue.remove_circle_event(neighbor)
+            queue.remove_from_queue(neighbor)
             neighbor.circle_event = None
 
-    check_circle_event(left_leaf, right_leaf, successor(right_leaf))
-    check_circle_event(predecessor(left_leaf), left_leaf, right_leaf)
+    print("od lewej do prawej")
+    right_n = successor(right_leaf)
+    left_n = predecessor(left_leaf)
+    if right_n:
+        check_circle_event([left_leaf, right_leaf, right_n], y_sweep, queue)
+    if left_n:
+        check_circle_event([left_n, left_leaf, right_leaf], y_sweep, queue)
 
     return root
 

@@ -66,17 +66,14 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
     print("Middle arc:", new_subtree.right_child.left_child.centre)
     print("Right arc:", new_subtree.right_point)
 
-    dcel.add_site_halfedges(new_event.centre, new_subtree)
+    new_subtree = dcel.add_site_halfedges(new_event.centre, new_subtree)
+    print(new_subtree.half_edge, new_subtree.right_child.half_edge)
 
-    # Duplikują się faces - trzeba naprawić
     print("DCEL faces after added halfedges:", [p.centre for p in dcel.faces])
     print("DCEL halfedges:", dcel.half_edges)
     
     left_neighbour = predecessor(new_subtree.left_child)
     right_neighbour = successor(new_subtree.right_child.right_child)
-
-    print("left neighbour: ", left_neighbour.centre)
-    print("right neighbour: ", right_neighbour)
 
     if left_neighbour and right_neighbour:
         left_three_arcs = [
