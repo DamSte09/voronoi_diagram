@@ -16,9 +16,6 @@ def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
     B = y.centre
     C = right_leaf.centre
     
-    y_sweep = y.centre[1]
-
-    bp = y.parent
     print(f"A: {A}, B: {B}, C:{C}")
 
     # should only happen when only B vanished
@@ -29,13 +26,30 @@ def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
         print("Circle center does not exist")
         return root
     
+    ux, uy = cc
+    r = math.dist(cc, B) 
+    if not math.isfinite(r) or r <= 0:
+        return root
+    y_sweep = uy - r
+    
+    left_bp = left_leaf.parent
+    right_bp = right_leaf.parent
+    if left_bp is None or right_bp is None:
+        return root
+
+    h_left = getattr(left_bp, "half_edge", None)
+    h_right = getattr(right_bp, "half_edge", None)
+    if h_left is None or h_right is None:
+        return root
+
     V_cc = Vertex(cc)
     dcel.vertices.append(V_cc)
 
-    h_left = bp.half_edge
-    h_right = bp.half_edge.twin
-
-    h_right.origin = V_cc
+    for neighbor in (left_leaf, right_leaf):
+        ev = getattr(neighbor, "circle_event", None)
+        if ev is not None and ev is y.circle_event:
+            queue.remove_from_queue(neighbor)
+            neighbor.circle_event = None
 
     root.replace_vanishing_leaf(y, A, C)
 
@@ -45,12 +59,15 @@ def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
     new_het.twin = new_he
 
     new_he.origin = V_cc
+    h_right = V_cc
 
     h_left.next = new_he
     new_he.prev = h_left
 
     new_het.next = h_right
     h_right.prev = new_het
+
+    new_het.prev = None
 
     if hasattr(h_left, "face"):
         new_he.face = h_left.face
@@ -60,22 +77,17 @@ def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
     dcel.half_edges.append(new_he)
     dcel.half_edges.append(new_het)
 
-    queue.remove_from_queue(y)
-
     for neighbor in (left_leaf, right_leaf):
-        if (
-            getattr(neighbor, "circle_event", None) is not None
-            and neighbor.circle_event is y.circle_event
-        ):
+        if getattr(neighbor, "circle_event", None) is not None:
             queue.remove_from_queue(neighbor)
             neighbor.circle_event = None
 
     print("od lewej do prawej")
     right_n = successor(right_leaf)
     left_n = predecessor(left_leaf)
-    if right_n:
+    if right_n is not None:
         check_circle_event([left_leaf, right_leaf, right_n], y_sweep, queue)
-    if left_n:
+    if left_n is not None:
         check_circle_event([left_n, left_leaf, right_leaf], y_sweep, queue)
 
     return root
