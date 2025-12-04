@@ -130,9 +130,13 @@ def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep, queue)
     event_y = uy - r # lowest point of circle
     
     # Condition that that event cannot be higher than y_sweep
-    if event_y >= y_sweep:
+    if not math.isfinite(event_y) or event_y >= y_sweep:
         return None
 
+    if getattr(b, "circle_event", None) is not None:
+        queue.remove_from_queue(b.circle_event)
+        b.circle_event = None
+        
     # Adding middle point as a pointer, bc middle arc will be the one which dissapears
     event = CircleEvent([ux, event_y], b)
     b.circle_event = event
