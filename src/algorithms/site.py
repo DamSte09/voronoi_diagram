@@ -98,16 +98,22 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
 def find_arc_above(root: Root, point: list):
     """Finds arc above new found point by sweepline in BST"""
     curr = root.node
-    while not isinstance(curr, Leaf):
-        x_breakpoint = count_x_breakpoint(curr.left_point, curr.right_point, point[1])
-        if x_breakpoint > point[0]:
+
+    while isinstance(curr, Node):
+        xb = count_x_breakpoint(curr.left_point, curr.right_point, point[1])
+
+        if xb is None:
+            curr = curr.left_child
+            continue
+
+        if point[0] < xb:
             curr = curr.left_child
         else:
             curr = curr.right_child
     
     return curr
 
-def count_x_breakpoint(left_centre, right_centre, y_sweep):
+def count_x_breakpoint(left_centre: list, right_centre: list, y_sweep: float):
     """Counts x breakpoint for node of 2 points and sweepline on new centre"""
     x1, y1 = left_centre
     x2, y2 = right_centre
