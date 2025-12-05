@@ -112,20 +112,23 @@ def count_x_breakpoint(left_centre, right_centre, y_sweep):
     x1, y1 = left_centre
     x2, y2 = right_centre
 
+    if y1 == y2:
+            return (x1 + x2) / 2
+    
     a = y2 - y1
-    b = 2*(-y2*x1 + y1*x2 + y_sweep*x1 - y_sweep*x2)
-    c = (y2 - y_sweep)*(x1**2 + y1**2 - y_sweep**2) \
-        - (y1 - y_sweep)*(x2**2 + y2**2 - y_sweep**2)
+    b = 2 * (-y2 * x1 + y1 * x2 + y_sweep * x1 - y_sweep * x2)
+    c = (y2 - y_sweep) * (x1**2 + y1**2 - y_sweep**2) - (y1 - y_sweep) * (
+        x2**2 + y2**2 - y_sweep**2
+    )
 
-    delta = b**2 - 4*a*c
-
+    delta = b*b - 4*a*c
+    if delta < 0 or a == 0:
+            return None 
+    
     x1_bp = (-b+math.sqrt(delta)) / 2*a
+    x2_bp = (-b - math.sqrt(delta)) / (2 * a)
 
-    if x1_bp <0:
-        x2_bp = (-b-math.sqrt(delta)) / 2*a
-        return x2_bp
-
-    return x1_bp
+    return x1_bp if x1_bp >= 0 else x2_bp
 
 def replace_with_subtree(arc_above: Leaf, new_centre: list):
     """Replaces leaf of arc above new centre with subtree with 3 leafs:
@@ -141,6 +144,8 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list):
     :param arc_above: Contains leaf of an arc above the new centre
     :param new_centre: New found point by sweep line
     """
+
+    # Creating leaves
     left_leaf = Leaf(arc_above.centre)
     left_leaf.parent = None
 
@@ -150,12 +155,14 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list):
     mid_leaf = Leaf(new_centre)
 
     # Root of new subtree
-    subtree_root = Node(left_point=left_leaf.centre, right_point=right_leaf.centre)
+    subtree_root = Node(left_point=left_leaf.centre,
+                        right_point=right_leaf.centre)
     subtree_root.left_child = left_leaf
     left_leaf.parent = subtree_root
 
     # Right node of the subtree
-    subtree_root.right_child = Node(left_point=mid_leaf.centre, right_point=right_leaf.centre)
+    subtree_root.right_child = Node(left_point=mid_leaf.centre,
+                                    right_point=right_leaf.centre)
     subtree_root.right_child.parent = subtree_root
 
     right_node = subtree_root.right_child
@@ -165,6 +172,20 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list):
 
     mid_leaf.parent = right_node
     right_leaf.parent = right_node
+
+    # Pierwszy breakpoint
+    he1 = HalfEdge()
+    he1t = HalfEdge()
+    he1.twin = he1t
+    he1t.twin = he1
+    subtree_root.half_edge = he1
+
+    # Drugi breakpoint
+    he2 = HalfEdge()
+    he2t = HalfEdge()
+    he2.twin = he2t
+    he2t.twin = he2
+    right_node.half_edge = he2
 
     return subtree_root
 
@@ -229,8 +250,12 @@ def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep: float,
     event_y = uy - r # lowest point of circle
     
     # Condition that that event cannot be higher than y_sweep
-    if event_y >= y_sweep:
+    if not math.isfinite(event_y) or event_y >= y_sweep:
         return None
+    
+    if getattr(b, "circle_event", None) is not None:
+        queue.remove_from_queue(b.circle_event)
+        b.circle_event = None
 
     # Adding middle point as a pointer, bc middle arc will be the one which dissapears
     point = [ux, event_y]
