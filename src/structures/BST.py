@@ -65,6 +65,8 @@ class Root:
         leaf_parent.right_child = None
         leaf_parent.parent = None
 
+        return self
+
     def _update_points_upwards(self, node):
         current = node
         while current is not None and isinstance(current, Node):

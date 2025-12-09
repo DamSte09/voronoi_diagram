@@ -47,9 +47,9 @@ class EventsQueue:
 
     def insert_event(self, event):
         self.all_events.append(event)
-        self.all_events.sort(key=lambda event:event.centre[1], reverse=True)
-
-
+        self.all_events.sort(key=lambda e: (e.centre[1], 0 if isinstance(e, CircleEvent) else 1))
+        self.all_events.reverse() 
+    
     def remove_from_queue(self, event):
         try:
             self.all_events.remove(event)

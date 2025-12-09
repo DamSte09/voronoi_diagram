@@ -2,10 +2,10 @@ import math
 
 from src.structures.QE import EventsQueue
 from src.structures.DCEL import DCEL, Vertex, HalfEdge, Face
-from src.structures.BST import Leaf, Node
+from src.structures.BST import Leaf, Node, Root
 from funcs import successor,predecessor, remove_from_queue, circle_center, check_circle_event
 
-def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
+def handle_circle_event(y: Leaf, root: Root, queue: EventsQueue, dcel: DCEL):
     left_leaf = predecessor(y)
     right_leaf = successor(y)
 
@@ -47,11 +47,11 @@ def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
 
     for neighbor in (left_leaf, right_leaf):
         ev = getattr(neighbor, "circle_event", None)
-        if ev is not None and ev is y.circle_event:
-            queue.remove_from_queue(neighbor)
+        if ev is not None:
+            queue.remove_from_queue(ev)
             neighbor.circle_event = None
 
-    root.replace_vanishing_leaf(y, A, C)
+    root = root.replace_vanishing_leaf(y, A, C)
 
     new_he = HalfEdge()
     new_het = HalfEdge()
@@ -76,11 +76,6 @@ def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
 
     dcel.half_edges.append(new_he)
     dcel.half_edges.append(new_het)
-
-    for neighbor in (left_leaf, right_leaf):
-        if getattr(neighbor, "circle_event", None) is not None:
-            queue.remove_from_queue(neighbor)
-            neighbor.circle_event = None
 
     print("od lewej do prawej")
     right_n = successor(right_leaf)

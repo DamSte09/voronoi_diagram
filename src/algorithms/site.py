@@ -131,7 +131,7 @@ def count_x_breakpoint(left_centre: list, right_centre: list, y_sweep: float):
     if delta < 0 or a == 0:
             return None 
     
-    x1_bp = (-b+math.sqrt(delta)) / 2*a
+    x1_bp = (-b+math.sqrt(delta)) / (2*a)
     x2_bp = (-b - math.sqrt(delta)) / (2 * a)
 
     return x1_bp if x1_bp >= 0 else x2_bp
@@ -152,8 +152,9 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list):
     """
 
     # Creating leaves
-    left_leaf = Leaf(arc_above.centre)
+    left_leaf = arc_above
     left_leaf.parent = None
+    left_leaf.circle_event = None
 
     right_leaf = Leaf(arc_above.centre)
     right_leaf.parent = None
