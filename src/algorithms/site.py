@@ -205,39 +205,6 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list):
 def balance_tree(root):
     pass
 
-def predecessor(leaf: Leaf) -> Leaf | None:
-    curr = leaf
-
-    while curr.parent and curr == curr.parent.left_child:
-        curr = curr.parent
-
-    if not curr.parent:
-        return None
-
-    curr = curr.parent.left_child
-
-    while isinstance(curr, Node):
-        curr = curr.right_child
-
-    return curr
-
-
-def successor(leaf: Leaf) -> Leaf | None:
-    curr = leaf
-
-    while curr.parent and curr == curr.parent.right_child:
-        curr = curr.parent
-
-    if not curr.parent:
-        return None
-
-    curr = curr.parent.right_child
-
-    while isinstance(curr, Node):
-        curr = curr.left_child
-
-    return curr
-
 def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep: float, queue: EventsQueue):
     """Checks if 3 given points are on one circle
     
