@@ -1,4 +1,6 @@
 
+from __future__ import annotations
+
 class Root:
     def __init__(self, node=None):
         self.node = node
@@ -9,10 +11,10 @@ class Root:
         while isinstance(curr, Node):
             curr = curr.left_child
         first_leaf = curr
-        succ = successor(first_leaf)
+        succ = first_leaf.successor()
         all_leafs.extend([first_leaf, succ])
         while succ is not None:
-            succ = successor(succ)
+            succ = succ.successor()
             if succ is None:
                 break
             all_leafs.append(succ)
@@ -109,18 +111,42 @@ class Leaf:
         self.parent = None
         self.circle_event = None
 
-def successor(leaf: Leaf) -> Leaf | None:
-    curr = leaf
+    def predecessor(self) -> Leaf | None:
+        """Finds leaf before the actual one
+        
+        :return: Leaf before or None if not any
+        """
+        curr = self
 
-    while curr.parent and curr == curr.parent.right_child:
-        curr = curr.parent
+        while curr.parent and curr == curr.parent.left_child:
+            curr = curr.parent
 
-    if not curr.parent:
-        return None
+        if not curr.parent:
+            return None
 
-    curr = curr.parent.right_child
+        curr = curr.parent.left_child
 
-    while isinstance(curr, Node):
-        curr = curr.left_child
+        while isinstance(curr, Node):
+            curr = curr.right_child
 
-    return curr
+        return curr
+
+    def successor(self) -> "Leaf | None":
+        """Finds leaf after the actual one
+        
+        :return: Leaf after or None if not any
+        """
+        curr = self
+
+        while curr.parent and curr == curr.parent.right_child:
+            curr = curr.parent
+
+        if not curr.parent:
+            return None
+
+        curr = curr.parent.right_child
+
+        while isinstance(curr, Node):
+            curr = curr.left_child
+
+        return curr

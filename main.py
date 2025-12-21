@@ -45,8 +45,8 @@ def main():
     root = Root()
     dcel = DCEL()
     
-    while Q.all_events:
-
+    # while Q.all_events:
+    for _ in range(5):
         event = Q.all_events.pop(0)
         print('\n\n')
         print("New event point:", event.centre)
