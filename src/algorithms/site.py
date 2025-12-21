@@ -101,7 +101,7 @@ def find_arc_above(root: Root, point: list):
 
     while isinstance(curr, Node):
         xb = count_x_breakpoint(curr.left_point, curr.right_point, point[1])
-
+        print("breakpoint:", xb)
         if xb is None:
             curr = curr.left_child
             continue
@@ -134,7 +134,10 @@ def count_x_breakpoint(left_centre: list, right_centre: list, y_sweep: float):
     x1_bp = (-b+math.sqrt(delta)) / (2*a)
     x2_bp = (-b - math.sqrt(delta)) / (2 * a)
 
-    return x1_bp if x1_bp >= 0 else x2_bp
+    if x1 < x2:
+        return max(x1_bp, x2_bp)  # Prawy breakpoint
+    else:
+        return min(x1_bp, x2_bp)
 
 def replace_with_subtree(arc_above: Leaf, new_centre: list):
     """Replaces leaf of arc above new centre with subtree with 3 leafs:
@@ -164,6 +167,7 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list):
     # Root of new subtree
     subtree_root = Node(left_point=left_leaf.centre,
                         right_point=right_leaf.centre)
+    print(subtree_root.left_point, subtree_root.right_point)
     subtree_root.left_child = left_leaf
     left_leaf.parent = subtree_root
 
@@ -253,6 +257,7 @@ def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep: float,
     
     # Counting centre of a circle
     ux, uy = circle_center(A, B, C)
+    print("CC", ux, uy)
     r = math.sqrt( ( ux - A[0] ) ** 2 + (uy - A[1])**2)
     event_y = uy - r # lowest point of circle
     
