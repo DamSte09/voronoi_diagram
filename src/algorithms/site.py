@@ -72,8 +72,9 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
     print("DCEL faces after added halfedges:", [p.centre for p in dcel.faces])
     print("DCEL halfedges:", dcel.half_edges)
     
-    left_neighbour = predecessor(new_subtree.left_child)
-    right_neighbour = successor(new_subtree.right_child.right_child)
+    # Finding predecessor and successor
+    left_neighbour = new_subtree.left_child.predecessor()
+    right_neighbour = new_subtree.right_child.right_child.successor()
 
     if left_neighbour and right_neighbour:
         left_three_arcs = [
