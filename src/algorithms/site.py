@@ -12,7 +12,7 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
         print("First met event: ", root.node.centre)
         return root 
     
-    # For second met event
+    # For second met event it creates first node
     if isinstance(root.node, Leaf):
         child = root.node
         new_point = new_event.centre
@@ -39,7 +39,7 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
     # For third and above met points
     arc_above = find_arc_above(root, new_event.centre)
     print("arc above: ", arc_above.centre)
- 
+
     dcel.add_face(new_event.centre)
 
     if arc_above.circle_event is not None:
@@ -101,7 +101,8 @@ def find_arc_above(root: Root, point: list):
     curr = root.node
 
     while isinstance(curr, Node):
-        xb = count_x_breakpoint(curr.left_point, curr.right_point, point[1])
+        print("actual points of node:", curr.left_point, curr.right_point)
+        xb = curr.count_x_breakpoint( point[1])
         print("breakpoint:", xb)
         if xb is None:
             curr = curr.left_child
@@ -113,32 +114,6 @@ def find_arc_above(root: Root, point: list):
             curr = curr.right_child
     
     return curr
-
-def count_x_breakpoint(left_centre: list, right_centre: list, y_sweep: float):
-    """Counts x breakpoint for node of 2 points and sweepline on new centre"""
-    x1, y1 = left_centre
-    x2, y2 = right_centre
-
-    if y1 == y2:
-            return (x1 + x2) / 2
-    
-    a = y2 - y1
-    b = 2 * (-y2 * x1 + y1 * x2 + y_sweep * x1 - y_sweep * x2)
-    c = (y2 - y_sweep) * (x1**2 + y1**2 - y_sweep**2) - (y1 - y_sweep) * (
-        x2**2 + y2**2 - y_sweep**2
-    )
-
-    delta = b*b - 4*a*c
-    if delta < 0 or a == 0:
-            return None 
-    
-    x1_bp = (-b+math.sqrt(delta)) / (2*a)
-    x2_bp = (-b - math.sqrt(delta)) / (2 * a)
-
-    if x1 < x2:
-        return max(x1_bp, x2_bp)  # Prawy breakpoint
-    else:
-        return min(x1_bp, x2_bp)
 
 def replace_with_subtree(arc_above: Leaf, new_centre: list):
     """Replaces leaf of arc above new centre with subtree with 3 leafs:
@@ -168,7 +143,7 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list):
     # Root of new subtree
     subtree_root = Node(left_point=left_leaf.centre,
                         right_point=right_leaf.centre)
-    print(subtree_root.left_point, subtree_root.right_point)
+    print("Subtree root points:", subtree_root.left_point, subtree_root.right_point)
     subtree_root.left_child = left_leaf
     left_leaf.parent = subtree_root
 
@@ -225,6 +200,9 @@ def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep: float,
     
     # Counting centre of a circle
     ux, uy = circle_center(A, B, C)
+    if ux is None or uy is None:
+        return None
+    
     print("CC", ux, uy)
     r = math.sqrt( ( ux - A[0] ) ** 2 + (uy - A[1])**2)
     event_y = uy - r # lowest point of circle
@@ -249,6 +227,9 @@ def circle_center(A, B, C):
     Bx, By = B
     Cx, Cy = C
     d = 2 * (Ax * (By - Cy) + Bx * (Cy - Ay) + Cx * (Ay - By))
+
+    if d == 0:
+        return None, None
 
     ux = ((Ax**2 + Ay**2)*(By - Cy) +
           (Bx**2 + By**2)*(Cy - Ay) +
