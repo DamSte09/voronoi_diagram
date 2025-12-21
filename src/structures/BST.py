@@ -1,5 +1,6 @@
-
 from __future__ import annotations
+
+import math
 
 class Root:
     def __init__(self, node=None):
@@ -102,6 +103,32 @@ class Node:
 
     def balance_tree(self):
         pass 
+
+    def count_x_breakpoint(self,  y_sweep: float):
+        """Counts x breakpoint for node of 2 points and sweepline on new centre"""
+        x1, y1 = self.left_point
+        x2, y2 = self.right_point
+
+        if y1 == y2:
+                return (x1 + x2) / 2
+        
+        a = y2 - y1
+        b = 2 * (-y2 * x1 + y1 * x2 + y_sweep * x1 - y_sweep * x2)
+        c = (y2 - y_sweep) * (x1**2 + y1**2 - y_sweep**2) - (y1 - y_sweep) * (
+            x2**2 + y2**2 - y_sweep**2
+        )
+
+        delta = b*b - 4*a*c
+        if delta < 0 or a == 0:
+                return None 
+        
+        x1_bp = (-b+math.sqrt(delta)) / (2*a)
+        x2_bp = (-b - math.sqrt(delta)) / (2 * a)
+
+        if x1 < x2:
+            return max(x1_bp, x2_bp)  # Prawy breakpoint
+        else:
+            return min(x1_bp, x2_bp)
 
 
 class Leaf:
