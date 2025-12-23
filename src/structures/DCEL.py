@@ -50,26 +50,13 @@ class DCEL:
         :param new_centre: New met point by sweep 
         :param new_subtree: Subree made from arc above and new point
         """
-        p_i = new_centre
-        print("p_i: ", p_i)
-        p_j = new_subtree.left_child.centre
-        print("p_j: ", p_j)
+        he1 = new_subtree.half_edge
+        # drugi breakpoint
+        he2 = new_subtree.right_child.half_edge
 
-        e_ji = HalfEdge()
-        e_ij = HalfEdge()
-        e_ji.twin = e_ij
-        e_ij.twin = e_ji
+        # dodajemy je do DCEL
+        self.half_edges.extend([he1, he1.twin, he2, he2.twin])
 
-        face_j = self.add_face(p_j)
-        face_i = self.add_face(p_i)
-
-        e_ij.face = face_i
-        e_ji.face = face_j
-        
-        new_subtree.half_edge = e_ji
-        new_subtree.right_child.half_edge = e_ij
-        
-        self.half_edges.extend([e_ji, e_ij])
         return new_subtree
         
     def bound_area(self):

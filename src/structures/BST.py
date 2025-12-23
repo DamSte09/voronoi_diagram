@@ -1,5 +1,7 @@
-
 from __future__ import annotations
+
+import math
+import queue
 
 class Root:
     def __init__(self, node=None):
@@ -21,6 +23,8 @@ class Root:
         
         print("All centres from leaves: ", [leaf.centre for leaf in all_leafs])
 
+
+    # TO JEST PROBLEMEM, NIE USUWA POPRAWNIE LIŚCI
     def replace_vanishing_leaf(self, leaf, left_point, right_point):
         """Removes fading leaf which represent fading arc in BST
         After leaf is removed, points in grandparent node are updated.
@@ -66,6 +70,11 @@ class Root:
         leaf_parent.left_child = None
         leaf_parent.right_child = None
         leaf_parent.parent = None
+        if leaf.circle_event is not None:
+            # queue.remove_from_queue(leaf.circle_event)
+            leaf.circle_event = None
+
+        return self
 
     def _update_points_upwards(self, node):
         current = node
@@ -84,7 +93,6 @@ class Root:
 
             current = current.parent
 
-
 class Node:
     """Break point on beachline, keeps 2 sorted centres by x,
       left defines left arc, right - right arc
@@ -100,6 +108,32 @@ class Node:
 
     def balance_tree(self):
         pass 
+
+    def count_x_breakpoint(self,  y_sweep: float):
+        """Counts x breakpoint for node of 2 points and sweepline on new centre"""
+        x1, y1 = self.left_point
+        x2, y2 = self.right_point
+
+        if y1 == y2:
+                return (x1 + x2) / 2
+        
+        a = y2 - y1
+        b = 2 * (-y2 * x1 + y1 * x2 + y_sweep * x1 - y_sweep * x2)
+        c = (y2 - y_sweep) * (x1**2 + y1**2 - y_sweep**2) - (y1 - y_sweep) * (
+            x2**2 + y2**2 - y_sweep**2
+        )
+
+        delta = b*b - 4*a*c
+        if delta < 0 or a == 0:
+                return None 
+        
+        x1_bp = (-b+math.sqrt(delta)) / (2*a)
+        x2_bp = (-b - math.sqrt(delta)) / (2 * a)
+
+        if x1 < x2:
+            return max(x1_bp, x2_bp)  # Prawy breakpoint
+        else:
+            return min(x1_bp, x2_bp)
 
 
 class Leaf:
