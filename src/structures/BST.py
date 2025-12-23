@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import queue
 
 class Root:
     def __init__(self, node=None):
@@ -22,6 +23,8 @@ class Root:
         
         print("All centres from leaves: ", [leaf.centre for leaf in all_leafs])
 
+
+    # TO JEST PROBLEMEM, NIE USUWA POPRAWNIE LIŚCI
     def replace_vanishing_leaf(self, leaf, left_point, right_point):
         """Removes fading leaf which represent fading arc in BST
         After leaf is removed, points in grandparent node are updated.
@@ -67,6 +70,9 @@ class Root:
         leaf_parent.left_child = None
         leaf_parent.right_child = None
         leaf_parent.parent = None
+        if leaf.circle_event is not None:
+            # queue.remove_from_queue(leaf.circle_event)
+            leaf.circle_event = None
 
         return self
 
@@ -86,7 +92,6 @@ class Root:
             current.right_point = right.centre
 
             current = current.parent
-
 
 class Node:
     """Break point on beachline, keeps 2 sorted centres by x,

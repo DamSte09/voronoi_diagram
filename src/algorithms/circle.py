@@ -3,11 +3,11 @@ import math
 from src.structures.QE import EventsQueue
 from src.structures.DCEL import DCEL, Vertex, HalfEdge, Face
 from src.structures.BST import Leaf, Node, Root
-from funcs import successor,predecessor, remove_from_queue, circle_center, check_circle_event
+from src.algorithms.site import circle_center, check_circle_event
 
 def handle_circle_event(y: Leaf, root: Root, queue: EventsQueue, dcel: DCEL):
-    left_leaf = predecessor(y)
-    right_leaf = successor(y)
+    left_leaf = y.predecessor()
+    right_leaf = y.successor()
 
     if left_leaf is None or right_leaf is None:
         return root
@@ -77,9 +77,9 @@ def handle_circle_event(y: Leaf, root: Root, queue: EventsQueue, dcel: DCEL):
     dcel.half_edges.append(new_he)
     dcel.half_edges.append(new_het)
 
-    print("od lewej do prawej")
-    right_n = successor(right_leaf)
-    left_n = predecessor(left_leaf)
+    right_n = right_leaf.successor()
+    left_n = left_leaf.predecessor()
+
     if right_n is not None:
         check_circle_event([left_leaf, right_leaf, right_n], y_sweep, queue)
     if left_n is not None:

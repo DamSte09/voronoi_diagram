@@ -112,7 +112,7 @@ def find_arc_above(root: Root, point: list):
             curr = curr.left_child
         else:
             curr = curr.right_child
-    
+    print("\nFound leaf above point:", curr.centre, "\n")
     return curr
 
 def replace_with_subtree(arc_above: Leaf, new_centre: list):
@@ -131,7 +131,7 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list):
     """
 
     # Creating leaves
-    left_leaf = arc_above
+    left_leaf = Leaf(arc_above.centre)
     left_leaf.parent = None
     left_leaf.circle_event = None
 
@@ -237,6 +237,7 @@ def circle_center(A, B, C):
     uy = ((Ax**2 + Ay**2)*(Cx - Bx) +
           (Bx**2 + By**2)*(Ax - Cx) +
           (Cx**2 + Cy**2)*(Bx - Ax)) / d
+    print("Circle center:", ux, uy)
     return ux, uy
 
 

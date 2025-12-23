@@ -16,38 +16,11 @@ class EventsQueue:
         """Initialize queue by filling up with upcoming site_events and sorts them descending by y"""
         self.points.sort(key=lambda point:point[1], reverse=True)
         for point in self.points:
-            self.site_events.append(SiteEvent(point))
             self.all_events.append(SiteEvent(point))
-        
-    def remove_biggest_y(self):
-        """Removes event with the largest y coordinate"""
-        # Poprawić na jedną listę wszystkich eventów
-        all_se = self.site_events
-        all_ce = self.circle_events
-
-        biggest_se = max(all_se, key=lambda se: se.centre[1])
-        print(biggest_se.centre)
-        
-        if all_ce != []:
-            biggest_ce = max(all_ce, key=lambda ce: ce.event_point[1])
-            print(biggest_ce.centre)
-
-            if biggest_ce.centre[1] < biggest_se.centre[1]:
-                all_se.remove(biggest_se.centre)    
-                self.all_events.remove(biggest_se.centre)
-            else:
-                all_ce.remove(biggest_ce.centre)    
-                self.all_events.remove(biggest_ce.centre)
-        else:
-            all_se.remove(biggest_se.centre)    
-            self.all_events.remove(biggest_se.centre)
-        
-        self.site_events = all_se
-        self.circle_events = all_ce
 
     def insert_event(self, event):
         self.all_events.append(event)
-        self.all_events.sort(key=lambda e: (e.centre[1], 0 if isinstance(e, CircleEvent) else 1))
+        self.all_events.sort(key=lambda e: (e.centre[1], 1 if isinstance(e, CircleEvent) else 0))
         self.all_events.reverse() 
     
     def remove_from_queue(self, event):
