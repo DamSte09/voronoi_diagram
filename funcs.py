@@ -53,6 +53,8 @@ def handle_site_event(root, new_event, queue, dcel):
     
     check_circle_event(right_three_arcs, y_sweep, queue)
     check_circle_event(left_three_arcs, y_sweep, queue)
+    
+    return root, queue, dcel
 
 # as a method?
 def remove_from_queue(leaf, queue):
@@ -120,14 +122,21 @@ def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep, queue)
     
     # Counting centre of a circle
     
-    ux, uy = circle_center(A, B, C)
+    cc = circle_center(A, B, C)
+    if cc is None or any(math.isinf(c) or math.isnan(c) for c in cc):
+        return None
+    ux, uy = cc
     r = math.sqrt( ( ux - A[0] ) ** 2 + (uy - A[1])**2)
     event_y = uy - r # lowest point of circle
     
     # Condition that that event cannot be higher than y_sweep
-    if event_y >= y_sweep:
+    if not math.isfinite(event_y) or event_y >= y_sweep:
         return None
 
+    if getattr(b, "circle_event", None) is not None:
+        queue.remove_from_queue(b.circle_event)
+        b.circle_event = None
+        
     # Adding middle point as a pointer, bc middle arc will be the one which dissapears
     event = CircleEvent([ux, event_y], b)
     b.circle_event = event
@@ -142,7 +151,8 @@ def circle_center(A, B, C):
     Bx, By = B
     Cx, Cy = C
     d = 2 * (Ax * (By - Cy) + Bx * (Cy - Ay) + Cx * (Ay - By))
-
+    if d <= 1e-9:
+        return None
     ux = ((Ax**2 + Ay**2)*(By - Cy) +
           (Bx**2 + By**2)*(Cy - Ay) +
           (Cx**2 + Cy**2)*(Ay - By)) / d
@@ -205,7 +215,7 @@ def find_arc_above(root = None, point = None):
     else:
         curr = root
         while isinstance(curr, Node):
-            x_breakpoint = count_x_breakpoint(curr.left_centre, curr.right_centre)
+            x_breakpoint = curr.count_x_breakpoint(point[1])
             if x_breakpoint > curr.left_point:
                 curr = curr.left_child
             elif x_breakpoint  < curr.right_point:
@@ -216,25 +226,31 @@ def find_arc_above(root = None, point = None):
     return arc_above
 
 
-def count_x_breakpoint(left_centre, right_centre, y_sweep):
+def count_x_breakpoint(left_centre: list, right_centre: list, y_sweep: float):
     """Counts x breakpoint for node of 2 points and sweepline on new centre"""
     x1, y1 = left_centre
     x2, y2 = right_centre
+
+    if y1 == y2:
+            return (x1 + x2) / 2
     
     a = y2 - y1
-    b = 2(-y2*x1 + y1*x2 + y_sweep*x1 - y_sweep*x2)
-    c = (y2 - y_sweep)*(x1**2 + y1**2 - y_sweep**2) \
-        - (y1 - y_sweep)*(x2**2 + y2**2 - y_sweep**2)
-        
-    delta = b**2 - 4*a*c
+    b = 2 * (-y2 * x1 + y1 * x2 + y_sweep * x1 - y_sweep * x2)
+    c = (y2 - y_sweep) * (x1**2 + y1**2 - y_sweep**2) - (y1 - y_sweep) * (
+        x2**2 + y2**2 - y_sweep**2
+    )
 
-    x1_bp = (-b+math.sqrt(delta)) / 2*a
+    delta = b*b - 4*a*c
+    if delta < 0 or a == 0:
+            return None 
+    
+    x1_bp = (-b+math.sqrt(delta)) / (2*a)
+    x2_bp = (-b - math.sqrt(delta)) / (2 * a)
 
-    if x1_bp <0:
-        x2_bp = (-b-math.sqrt(delta)) / 2*a
-        return x2_bp
-
-    return x1_bp
+    if x1 < x2:
+        return max(x1_bp, x2_bp)  # Prawy breakpoint
+    else:
+        return min(x1_bp, x2_bp)
 
 
 
@@ -262,16 +278,43 @@ def intersect_ray_with_box(origin, direction, box):
 
 
 
-for face in dcel.faces:
-    he = face.outer_component
-    start = he
-    vertices = []
-    while True:
-        vertices.append((he.origin.x, he.origin.y))
-        he = he.next
-        if he == start:
-            break
-    xs, ys = zip(*vertices)
-    plt.fill(xs, ys, edgecolor="black", fill=False)  # tylko krawędzie
-plt.show()
+# for face in dcel.faces:
+#     he = face.outer_component
+#     start = he
+#     vertices = []
+#     while True:
+#         vertices.append((he.origin.x, he.origin.y))
+#         he = he.next
+#         if he == start:
+#             break
+#     xs, ys = zip(*vertices)
+#     plt.fill(xs, ys, edgecolor="black", fill=False)  # tylko krawędzie
+# plt.show()
+
+
+
+# def collect_breakpoints(node, y_sweep, breakpoints=None):
+#     """Zbiera wszystkie x breakpointy w drzewie dla danego y_sweep."""
+#     if breakpoints is None:
+#         breakpoints = []
+
+#     if isinstance(node, Node):
+#         try:
+#             xb = node.count_x_breakpoint( y_sweep)
+#         except Exception:
+#             xb = None
+
+#         breakpoints.append(
+#             {
+#                 "x_breakpoint": xb,
+#                 "left_point": node.left_point,
+#                 "right_point": node.right_point,
+#             }
+#         )
+
+#         # Rekurencyjnie w lewo i w prawo
+#         collect_breakpoints(node.left_child, y_sweep, breakpoints)
+#         collect_breakpoints(node.right_child, y_sweep, breakpoints)
+
+#     return breakpoints
 

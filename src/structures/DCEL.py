@@ -1,41 +1,63 @@
 import math
+from src.structures.BST import Node
+
+
+class Vertex:
+    def __init__(self, point: list):
+        self.x = point[0]
+        self.y = point[1]
+        self.incident_edge = []
+
+
+class Face:
+    def __init__(self, centre):
+        self.outer_component = None
+        self.inner_component = None
+        self.centre = centre
+
+
+class HalfEdge:
+    def __init__(self):
+        self.origin = None  # poczatek
+        self.twin = None
+        self.face = None
+        self.next = None
+        self.prev = None
+
 
 class DCEL:
-    def __init__(self, points):
+    def __init__(self):
         self.vertices = []
         self.half_edges = []
         self.faces = []
     
-    def add_face(self, new_centre):
+    def add_face(self, new_centre: list) -> Face:
         """Create face record and appends to list of faces in DCEL
         
         :param new_centre: New met point by sweep
         """
+        for f in self.faces:
+            if f.centre == new_centre:
+                return f
+
         face_j = Face(new_centre)
         self.faces.append(face_j)
+        return face_j
     
-    def add_halfedges_site(self, new_centre, new_subtree):
+    def add_site_halfedges(self, new_centre: list, new_subtree: Node):
         """Adds records of new halfedges to DCEL into list of halfedges.
         
         :param new_centre: New met point by sweep 
         :param new_subtree: Subree made from arc above and new point
         """
-        p_i = new_centre
-        p_j = new_subtree.left_child.centre
+        he1 = new_subtree.half_edge
+        # drugi breakpoint
+        he2 = new_subtree.right_child.half_edge
 
-        e_ji = HalfEdge()
-        e_ij = HalfEdge()
-        e_ji.twin = e_ij
-        e_ij.twin = e_ji
+        # dodajemy je do DCEL
+        self.half_edges.extend([he1, he1.twin, he2, he2.twin])
 
-        face_j = next((f for f in self.faces if f.site == p_j), None)
-        face_i = Face(p_i)
-
-        e_ij.face = face_i
-        e_ji.face = face_j
-        
-        self.faces.append(face_i)
-        self.half_edges.extend([e_ji, e_ij])
+        return new_subtree
         
     def bound_area(self):
         min_x = min(p[0] for p in self.points)
@@ -126,27 +148,4 @@ class DCEL:
 
 
 
-class Vertex:
-    def __init__(self, point:list):
-        self.x = point[0] 
-        self.y = point[1] 
-        self.incident_edge = [] 
 
-
-class Face:
-    def __init__(self, site):
-        self.outer_component = None
-        self.inner_component = None
-        self.site = site 
-
-
-class HalfEdge:
-    def __init__(self):
-        self.origin = None  # poczatek
-        self.twin = None
-        self.face = None
-        self.next = None
-        self.prev = None 
-
-
-        

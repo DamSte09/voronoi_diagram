@@ -1,79 +1,92 @@
+import math
+
 from src.structures.QE import EventsQueue
 from src.structures.DCEL import DCEL, Vertex, HalfEdge, Face
-from src.structures.BST import Leaf, Node
-from funcs import successor,predecessor, remove_from_queue, circle_center, check_circle_event
+from src.structures.BST import Leaf, Node, Root
+from src.algorithms.site import circle_center, check_circle_event
 
-def handle_circle_event(y: Leaf, root: Node, queue: EventsQueue, dcel: DCEL):
-    left_leaf = predecessor(y)
-    right_leaf = successor(y)
+def handle_circle_event(y: Leaf, root: Root, queue: EventsQueue, dcel: DCEL):
+    left_leaf = y.predecessor()
+    right_leaf = y.successor()
 
+    if left_leaf is None or right_leaf is None:
+        return root
+    
     A = left_leaf.centre
     B = y.centre
     C = right_leaf.centre
     
-    bp = y.parent
-
+    print(f"A: {A}, B: {B}, C:{C}")
 
     # should only happen when only B vanished
     cc = circle_center(A, B, C)
+    print("Center of a circle: ", cc)
+
+    if cc is None or any(math.isinf(c) or math.isnan(c) for c in cc):
+        print("Circle center does not exist")
+        return root
     
+    ux, uy = cc
+    r = math.dist(cc, B) 
+    if not math.isfinite(r) or r <= 0:
+        return root
+    y_sweep = uy - r
+    
+    left_bp = left_leaf.parent
+    right_bp = right_leaf.parent
+    if left_bp is None or right_bp is None:
+        return root
+
+    h_left = getattr(left_bp, "half_edge", None)
+    h_right = getattr(right_bp, "half_edge", None)
+    if h_left is None or h_right is None:
+        return root
+
     V_cc = Vertex(cc)
     dcel.vertices.append(V_cc)
-    
-    e_lr = HalfEdge()
-    e_rl = HalfEdge()
-    
-    e_lr.twin = e_rl
-    e_rl.twin = e_lr
 
-    e_lr.origin = V_cc
-    e_rl.origin = V_cc
-    
-    # using pointers to halfedge, attach the 3 new records
-    
-    # Half edge from old node
-    e_old_left = bp.half_edge
-    e_old_right = bp.half_edge.twin
-    
-    # Closing cicle on old edge
-    e_lr.next = e_old_left
-    e_old_left.prev = e_lr
-    
-    e_old_left.next = e_rl
-    e_rl.prev = e_old_left
-
-    e_rl.next = e_old_right
-    e_old_right.prev = e_rl
-
-    e_old_right.next = e_lr
-    e_lr.prev = e_old_right
-
-    if hasattr(left_leaf, "face") and left_leaf.face is not None:
-        e_lr.face = left_leaf.face
-    else:
-        e_lr.face = getattr(e_old_left, "face", None)
-
-    if hasattr(right_leaf, "face") and right_leaf.face is not None:
-        e_rl.face = right_leaf.face
-    else:
-        e_rl.face = getattr(e_old_right, "face", None)
-
-    dcel.half_edges.extend([e_lr, e_rl])
-
-    root.replace_vanishing_leaf(y, A, C)
-    root.balance_tree()
-
-    queue.remove_circle_event(y)
-    
     for neighbor in (left_leaf, right_leaf):
-        if neighbor.circle_event == y.circle_event:
-            queue.remove_circle_event(neighbor)
+        ev = getattr(neighbor, "circle_event", None)
+        if ev is not None:
+            queue.remove_from_queue(ev)
             neighbor.circle_event = None
-            
-            
 
-    check_circle_event(left_leaf, right_leaf, successor(right_leaf))
-    check_circle_event(predecessor(left_leaf), left_leaf, right_leaf)
+    root = root.replace_vanishing_leaf(y, A, C)
+
+    new_he = HalfEdge()
+    new_het = HalfEdge()
+    new_he.twin = new_het
+    new_het.twin = new_he
+
+    new_he.origin = V_cc
+    h_right = V_cc
+
+    h_left.next = new_he
+    new_he.prev = h_left
+
+    new_het.next = h_right
+    h_right.prev = new_het
+
+    new_het.prev = None
+
+    if hasattr(h_left, "face"):
+        new_he.face = h_left.face
+    if hasattr(h_right, "face"):
+        new_het.face = h_right.face
+
+    dcel.half_edges.append(new_he)
+    dcel.half_edges.append(new_het)
+
+    right_n = right_leaf.successor()
+    left_n = left_leaf.predecessor()
+
+    if right_n is not None:
+        check_circle_event([left_leaf, right_leaf, right_n], y_sweep, queue)
+    if left_n is not None:
+        check_circle_event([left_n, left_leaf, right_leaf], y_sweep, queue)
+
+    return root
+
 
     
     
