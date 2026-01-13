@@ -80,14 +80,7 @@ def find_arc_above(root: Root, event: SiteEvent, y_sweep:float):
         xb = curr.count_x_breakpoint(y_sweep)
         print("breakpoint:", xb)
         
-        if new_point[0] == xb:
-            if curr.left_child:
-                while isinstance(curr,Node):
-                    curr = curr.left_child
-            else:
-                while isinstance(curr,Node):
-                    curr = curr.right_child
-        elif xb > new_point[0]:
+        if  new_point[0] <= xb:
             curr = curr.left_child
         else:
             curr = curr.right_child
