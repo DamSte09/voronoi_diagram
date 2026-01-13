@@ -11,12 +11,11 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
         print("First met point: ", root.node.centre)
         return root 
             
-    # Finds arc of beach line above the new point
-    arc_above = find_arc_above(root, new_event.centre)
+    # Finds leaf of arc from beach line above the new point
+    arc_above = find_arc_above(root, new_event, y_sweep)
     print("point of arc above: ", arc_above.centre)
 
-    dcel.add_face(new_event.centre)
-
+    # Removes false alarm
     if arc_above.circle_event is not None:
         queue.remove_from_queue(arc_above.circle_event)
         arc_above.circle_event = None
@@ -71,22 +70,28 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
 
     return root
 
-def find_arc_above(root: Root, point: list, y_sweep:float):
+def find_arc_above(root: Root, event: SiteEvent, y_sweep:float):
     """Finds arc above new found point by sweepline in BST"""
     curr = root.node
-
+    new_point = event.centre
     while isinstance(curr, Node):
         print("actual points of node:", curr.left_point, curr.right_point)
-        xb = curr.count_x_breakpoint( point[1])
-        print("breakpoint:", xb)
-        if xb is None:
-            curr = curr.left_child
-            continue
 
-        if point[0] < xb:
+        xb = curr.count_x_breakpoint(y_sweep)
+        print("breakpoint:", xb)
+        
+        if new_point[0] == xb:
+            if curr.left_child:
+                while isinstance(curr,Node):
+                    curr = curr.left_child
+            else:
+                while isinstance(curr,Node):
+                    curr = curr.right_child
+        elif xb > new_point[0]:
             curr = curr.left_child
         else:
             curr = curr.right_child
+        
     print("\nFound leaf above point:", curr.centre, "\n")
     return curr
 

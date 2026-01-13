@@ -27,6 +27,7 @@ class EventsQueue:
         try:
             self.all_events.remove(event)
         except ValueError:
+            print("Event wasn't removed")
             pass
 
         
