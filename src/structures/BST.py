@@ -106,9 +106,6 @@ class Node:
         self.right_child = None
         self.half_edge = None
 
-    def balance_tree(self):
-        pass 
-
     def count_x_breakpoint(self,  y_sweep: float):
         """Counts x breakpoint for node of 2 points and sweepline on new centre"""
         x1, y1 = self.left_point
@@ -182,3 +179,5 @@ class Leaf:
             curr = curr.left_child
 
         return curr
+
+    

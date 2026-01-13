@@ -3,42 +3,17 @@ from src.structures.QE import CircleEvent, SiteEvent, EventsQueue
 from src.structures.DCEL import DCEL, HalfEdge, Vertex, Face
 import math
 
-def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel: DCEL):
+def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel: DCEL, y_sweep: float):
 
-    # 1. step, when BST is empty
-    if root.node is None:
+    # 1. step, when BST is empty, we insert a leaf as root
+    if root.node is None or root is None:
         root.node = Leaf(new_event.centre)
-        dcel.add_face(new_event.centre)
-        print("First met event: ", root.node.centre)
+        print("First met point: ", root.node.centre)
         return root 
-    
-    # For second met event it creates first node
-    if isinstance(root.node, Leaf):
-        child = root.node
-        new_point = new_event.centre
-
-        if child.centre[0] < new_point[0]:
-            root.node = Node(left_point=child.centre, right_point=new_point)
-            root.node.left_child = Leaf(child.centre)
-            root.node.right_child = Leaf(new_point)
-        else:
-            root.node = Node(left_point=new_point, right_point=child.centre)
-            root.node.right_child = Leaf(child.centre)
-            root.node.left_child = Leaf(new_point)
-
-        root.node.left_child.parent = root.node
-        root.node.right_child.parent = root.node
-        print("Left point in root node: ", root.node.left_point)
-        print("Right point in root node: ", root.node.right_point)
-
-        dcel.add_face(new_event.centre)
-
-        print("Faces in DCEL: ", [p.centre for p in dcel.faces])
-        return root
             
-    # For third and above met points
+    # Finds arc of beach line above the new point
     arc_above = find_arc_above(root, new_event.centre)
-    print("arc above: ", arc_above.centre)
+    print("point of arc above: ", arc_above.centre)
 
     dcel.add_face(new_event.centre)
 
@@ -96,7 +71,7 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
 
     return root
 
-def find_arc_above(root: Root, point: list):
+def find_arc_above(root: Root, point: list, y_sweep:float):
     """Finds arc above new found point by sweepline in BST"""
     curr = root.node
 
