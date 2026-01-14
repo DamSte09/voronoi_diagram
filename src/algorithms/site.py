@@ -19,10 +19,10 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
     if arc_above.circle_event is not None:
         queue.remove_from_queue(arc_above.circle_event)
         arc_above.circle_event = None
-    
+
     parent_arc_above = arc_above.parent
 
-    # Exchanging leaf with arc above with new subtree
+    # Replace leaf with arc above with new subtree
     new_subtree = replace_with_subtree(arc_above, new_event.centre)
 
     if parent_arc_above is None:
@@ -92,12 +92,12 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list):
     """Replaces leaf of arc above new centre with subtree with 3 leafs:
     arc_above, new_centre, arc_above
 
-    Schema of a subtree:
-        N(a, a)
+    Schema of a subtree: # TO SIĘ ZMIENIŁO
+        N(j, i)
         /\
-    L(a) N(p, a)
+    L(j) N(i, j)
           /\
-        L(p) L(a)
+        L(i) L(j)
 
     :param arc_above: Contains leaf of an arc above the new centre
     :param new_centre: New found point by sweep line
@@ -105,22 +105,19 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list):
 
     # Creating leaves
     left_leaf = Leaf(arc_above.centre)
-    left_leaf.parent = None
-    left_leaf.circle_event = None
-
     right_leaf = Leaf(arc_above.centre)
-    right_leaf.parent = None
-
     mid_leaf = Leaf(new_centre)
 
     # Root of new subtree
     subtree_root = Node(left_point=left_leaf.centre,
-                        right_point=right_leaf.centre)
+                        right_point=mid_leaf.centre)
     print("Subtree root points:", subtree_root.left_point, subtree_root.right_point)
+
     subtree_root.left_child = left_leaf
     left_leaf.parent = subtree_root
 
     # Right node of the subtree
+    # THERE SHOULD BE CHECKING INTERSECTION BETWEEN POINTS
     subtree_root.right_child = Node(left_point=mid_leaf.centre,
                                     right_point=right_leaf.centre)
     subtree_root.right_child.parent = subtree_root
