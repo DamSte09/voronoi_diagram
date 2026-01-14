@@ -23,7 +23,7 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
     parent_arc_above = arc_above.parent
 
     # Replace leaf with arc above with new subtree
-    new_subtree = replace_with_subtree(arc_above, new_event.centre)
+    new_subtree, dcel = replace_with_subtree(arc_above, new_event.centre)
 
     if parent_arc_above is None:
         root.node = new_subtree
@@ -40,7 +40,7 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
     print("Middle arc:", new_subtree.right_child.left_child.centre)
     print("Right arc:", new_subtree.right_point)
 
-    new_subtree = dcel.add_site_halfedges(new_event.centre, new_subtree)
+    #new_subtree = dcel.add_site_halfedges(new_event.centre, new_subtree)
     print(new_subtree.half_edge, new_subtree.right_child.half_edge)
 
     print("DCEL faces after added halfedges:", [p.centre for p in dcel.faces])
@@ -61,7 +61,6 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
             new_subtree.right_child.right_child,
             right_neighbour,
         ]
-        y_sweep = new_event.centre[1]
 
         check_circle_event(right_three_arcs, y_sweep, queue)
         check_circle_event(left_three_arcs, y_sweep, queue)
@@ -88,7 +87,7 @@ def find_arc_above(root: Root, event: SiteEvent, y_sweep:float):
     print("\nFound leaf above point:", curr.centre, "\n")
     return curr
 
-def replace_with_subtree(arc_above: Leaf, new_centre: list):
+def replace_with_subtree(arc_above: Leaf, new_centre: list, dcel: DCEL):
     """Replaces leaf of arc above new centre with subtree with 3 leafs:
     arc_above, new_centre, arc_above
 
@@ -102,11 +101,13 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list):
     :param arc_above: Contains leaf of an arc above the new centre
     :param new_centre: New found point by sweep line
     """
+    point_j = arc_above.centre
+    point_i = new_centre
 
     # Creating leaves
-    left_leaf = Leaf(arc_above.centre)
-    right_leaf = Leaf(arc_above.centre)
-    mid_leaf = Leaf(new_centre)
+    left_leaf = Leaf(point_j)
+    right_leaf = Leaf(point_j)
+    mid_leaf = Leaf(point_i)
 
     # Root of new subtree
     subtree_root = Node(left_point=left_leaf.centre,
@@ -117,12 +118,13 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list):
     left_leaf.parent = subtree_root
 
     # Right node of the subtree
-    # THERE SHOULD BE CHECKING INTERSECTION BETWEEN POINTS
-    subtree_root.right_child = Node(left_point=mid_leaf.centre,
-                                    right_point=right_leaf.centre)
-    subtree_root.right_child.parent = subtree_root
+    # THERE SHOULD BE CHECKING INTERSECTION BETWEEN POINTS but not now
+    right_node = Node(
+        left_point=mid_leaf.centre, right_point=right_leaf.centre
+    )
 
-    right_node = subtree_root.right_child
+    right_node.parent = subtree_root
+    subtree_root.right_child = right_node
 
     right_node.left_child = mid_leaf
     right_node.right_child = right_leaf
@@ -130,25 +132,37 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list):
     mid_leaf.parent = right_node
     right_leaf.parent = right_node
 
-    # Pierwszy breakpoint
-    he1 = HalfEdge()
-    he1t = HalfEdge()
-    he1.twin = he1t
-    he1t.twin = he1
-    subtree_root.half_edge = he1
+    # Creating half edges records
+    A, B = point_j, point_i
 
-    # Drugi breakpoint
-    he2 = HalfEdge()
-    he2t = HalfEdge()
-    he2.twin = he2t
-    he2t.twin = he2
-    right_node.half_edge = he2
+    # Tuple of points representing breakpoint
+    AB = (point_j, point_i)
+    BA = (point_i, point_j)
+
+    edge_AB = HalfEdge()
+    edge_BA = HalfEdge()
+
+    edge_AB.origin = AB
+    edge_BA.origin = BA
+
+    face_A = dcel.add_face(A)
+    face_B = dcel.add_face(B) 
+
+    edge_AB.face = face_B
+    edge_BA.face = face_A
+
+    face_A.outer_component = face_A.outer_component or edge_AB
+    face_B.outer_component = face_B.outer_component or edge_BA
+
+    edge_AB.twin = edge_BA
+    edge_BA.twin = edge_AB
+
+    subtree_root.half_edge = edge_AB
+    right_node.half_edge = edge_BA
+
+    dcel.half_edges.extend([edge_AB, edge_BA])
 
     return subtree_root
-
-
-def balance_tree(root):
-    pass
 
 def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep: float, queue: EventsQueue):
     """Checks if 3 given points are on one circle
