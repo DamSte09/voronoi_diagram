@@ -1,4 +1,5 @@
 from src.structures.BST import Leaf
+from src.algorithms.site import compute_circle_center
 
 class EventsQueue:
     def __init__(self, points):
@@ -40,3 +41,13 @@ class CircleEvent:
     def __init__(self, point: list, leaf_pointer: Leaf):
         self.centre = point
         self.leaf_pointer = leaf_pointer
+        self.radius = None
+        self.is_valid = True
+        self.triple_points = None
+        self.triple_arcs = None
+
+    def is_possible(a, b, c):
+        if compute_circle_center(a, b, c):
+            return True
+        return False
+

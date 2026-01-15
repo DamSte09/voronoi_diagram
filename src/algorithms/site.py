@@ -23,7 +23,7 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
     parent_arc_above = arc_above.parent
 
     # Replace leaf with arc above with new subtree
-    new_subtree, dcel = replace_with_subtree(arc_above, new_event.centre)
+    new_subtree = replace_with_subtree(arc_above, new_event.centre, dcel)
 
     if parent_arc_above is None:
         root.node = new_subtree
@@ -50,20 +50,21 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
     left_neighbour = new_subtree.left_child.predecessor()
     right_neighbour = new_subtree.right_child.right_child.successor()
 
-    if left_neighbour and right_neighbour:
+    if left_neighbour:
         left_three_arcs = [
             left_neighbour,
             new_subtree.left_child,
             new_subtree.right_child.left_child,
         ]
+        check_circle_event(left_three_arcs, y_sweep, queue)
+
+    if right_neighbour:
         right_three_arcs = [
             new_subtree.right_child.left_child,
             new_subtree.right_child.right_child,
             right_neighbour,
         ]
-
         check_circle_event(right_three_arcs, y_sweep, queue)
-        check_circle_event(left_three_arcs, y_sweep, queue)
 
     root.show_all_leafs()
 
@@ -142,8 +143,11 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list, dcel: DCEL):
     edge_AB = HalfEdge()
     edge_BA = HalfEdge()
 
-    edge_AB.origin = AB
-    edge_BA.origin = BA
+    # edge_AB.origin = AB
+    # edge_BA.origin = BA
+
+    edge_AB.origin = None
+    edge_AB.origin = None
 
     face_A = dcel.add_face(A)
     face_B = dcel.add_face(B) 
@@ -180,33 +184,43 @@ def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep: float,
 
     if abs(det)< EPS:
         print("Points are collinear")
-        return None
+        return
+    
+    # Are points are in good orientation
+    if not check_clockwise(A, B, C):
+        return
     
     # Counting centre of a circle
-    ux, uy = circle_center(A, B, C)
+    ux, uy, radius = compute_circle_center(A, B, C)
     if ux is None or uy is None:
-        return None
-    
+        return
     print("CC", ux, uy)
-    r = math.sqrt( ( ux - A[0] ) ** 2 + (uy - A[1])**2)
-    event_y = uy - r # lowest point of circle
+
+    # Radius of circle
+    radius = math.sqrt( ( ux - A[0] ) ** 2 + (uy - A[1])**2)
+
+    event_y = uy - radius # lowest point of circle
     
     # Condition that that event cannot be higher than y_sweep
     if not math.isfinite(event_y) or event_y >= y_sweep:
-        return None
+        return
     
     if getattr(b, "circle_event", None) is not None:
         queue.remove_from_queue(b.circle_event)
         b.circle_event = None
 
     # Adding middle point as a pointer, bc middle arc will be the one which dissapears
-    point = [ux, event_y]
+    point = (ux, uy)
     event = CircleEvent(point= point, leaf_pointer=b)
+    event.radius = radius
+    event.triple_arcs = three_next_leafs
+    event.triple_points = (A, B, C)
+
     b.circle_event = event
 
     queue.insert_event(event)
     
-def circle_center(A, B, C):
+def compute_circle_center(A, B, C):
     Ax, Ay = A
     Bx, By = B
     Cx, Cy = C
@@ -222,7 +236,15 @@ def circle_center(A, B, C):
           (Bx**2 + By**2)*(Ax - Cx) +
           (Cx**2 + Cy**2)*(Bx - Ax)) / d
     print("Circle center:", ux, uy)
+
     return ux, uy
 
+def calculate_angle(point, center):
+    return math.atan2(point.yd - center.yd, point.xd - center.xd)
 
-    
+def check_clockwise(a, b, c, center):
+    ang_a = calculate_angle(a, center)
+    ang_b = calculate_angle(b, center)
+    ang_c = calculate_angle(c, center)
+
+    return (ang_c - ang_a) % (2 * math.pi) <= (ang_c - ang_b) % (2 * math.pi)
