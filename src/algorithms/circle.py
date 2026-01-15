@@ -1,9 +1,9 @@
 import math
 
-from src.structures.QE import EventsQueue
+from src.structures.QE import EventsQueue, CircleEvent
 from src.structures.DCEL import DCEL, Vertex, HalfEdge, Face
 from src.structures.BST import Leaf, Node, Root
-from src.algorithms.site import circle_center, check_circle_event
+from src.algorithms.site import check_circle_event
 
 def handle_circle_event(y: Leaf, root: Root, queue: EventsQueue, dcel: DCEL):
     left_leaf = y.predecessor()
@@ -19,7 +19,7 @@ def handle_circle_event(y: Leaf, root: Root, queue: EventsQueue, dcel: DCEL):
     print(f"A: {A}, B: {B}, C:{C}")
 
     # should only happen when only B vanished
-    cc = circle_center(A, B, C)
+    cc = CircleEvent.compute_circle_center(A, B, C)
     print("Center of a circle: ", cc)
 
     if cc is None or any(math.isinf(c) or math.isnan(c) for c in cc):

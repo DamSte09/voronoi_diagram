@@ -186,15 +186,17 @@ def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep: float,
         print("Points are collinear")
         return
     
-    # Are points are in good orientation
-    if not check_clockwise(A, B, C):
-        return
+
     
     # Counting centre of a circle
-    ux, uy, radius = compute_circle_center(A, B, C)
+    ux, uy = CircleEvent.compute_circle_center(A, B, C)
     if ux is None or uy is None:
         return
     print("CC", ux, uy)
+
+    # Are points are in good orientation
+    if not CircleEvent.check_clockwise(A, B, C, (ux, uy)):
+        return
 
     # Radius of circle
     radius = math.sqrt( ( ux - A[0] ) ** 2 + (uy - A[1])**2)
@@ -219,32 +221,3 @@ def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep: float,
     b.circle_event = event
 
     queue.insert_event(event)
-    
-def compute_circle_center(A, B, C):
-    Ax, Ay = A
-    Bx, By = B
-    Cx, Cy = C
-    d = 2 * (Ax * (By - Cy) + Bx * (Cy - Ay) + Cx * (Ay - By))
-
-    if d == 0:
-        return None, None
-
-    ux = ((Ax**2 + Ay**2)*(By - Cy) +
-          (Bx**2 + By**2)*(Cy - Ay) +
-          (Cx**2 + Cy**2)*(Ay - By)) / d
-    uy = ((Ax**2 + Ay**2)*(Cx - Bx) +
-          (Bx**2 + By**2)*(Ax - Cx) +
-          (Cx**2 + Cy**2)*(Bx - Ax)) / d
-    print("Circle center:", ux, uy)
-
-    return ux, uy
-
-def calculate_angle(point, center):
-    return math.atan2(point.yd - center.yd, point.xd - center.xd)
-
-def check_clockwise(a, b, c, center):
-    ang_a = calculate_angle(a, center)
-    ang_b = calculate_angle(b, center)
-    ang_c = calculate_angle(c, center)
-
-    return (ang_c - ang_a) % (2 * math.pi) <= (ang_c - ang_b) % (2 * math.pi)

@@ -1,5 +1,5 @@
 from src.structures.BST import Leaf
-from src.algorithms.site import compute_circle_center
+import math
 
 class EventsQueue:
     def __init__(self, points):
@@ -47,7 +47,39 @@ class CircleEvent:
         self.triple_arcs = None
 
     def is_possible(a, b, c):
-        if compute_circle_center(a, b, c):
+        if CircleEvent.compute_circle_center(a, b, c):
             return True
         return False
+    
+    @staticmethod
+    def compute_circle_center(A, B, C):
+        Ax, Ay = A
+        Bx, By = B
+        Cx, Cy = C
+        d = 2 * (Ax * (By - Cy) + Bx * (Cy - Ay) + Cx * (Ay - By))
+
+        if d == 0:
+            return None, None
+
+        ux = ((Ax**2 + Ay**2)*(By - Cy) +
+            (Bx**2 + By**2)*(Cy - Ay) +
+            (Cx**2 + Cy**2)*(Ay - By)) / d
+        uy = ((Ax**2 + Ay**2)*(Cx - Bx) +
+            (Bx**2 + By**2)*(Ax - Cx) +
+            (Cx**2 + Cy**2)*(Bx - Ax)) / d
+        print("Circle center:", ux, uy)
+
+        return ux, uy
+
+    @staticmethod
+    def _calculate_angle(point, center):
+        return math.atan2(point[1] - center[1], point[0]- center[0])
+
+    @staticmethod
+    def check_clockwise(a, b, c, center):
+        ang_a = CircleEvent._calculate_angle(a, center)
+        ang_b = CircleEvent._calculate_angle(b, center)
+        ang_c = CircleEvent._calculate_angle(c, center)
+
+        return (ang_c - ang_a) % (2 * math.pi) <= (ang_c - ang_b) % (2 * math.pi)
 
