@@ -6,6 +6,7 @@ from src.algorithms.site import handle_site_event
 from src.algorithms.circle import handle_circle_event
 
 import streamlit as st
+import matplotlib.pyplot as plt
 
 
 def main():
@@ -22,23 +23,31 @@ def main():
 
         print('\n')
         print("New event point:", event.centre)
-        print("All points: ", [e.centre for e in Q.all_events])
         print('\n')
     
         if isinstance(event, SiteEvent):
             sweepline = event.centre[1]
             root = handle_site_event(root, event, queue=Q, dcel=dcel, y_sweep=sweepline)
-        elif isinstance(event, CircleEvent):
+        elif isinstance(event, CircleEvent) and event.is_valid:
             sweepline = event.centre[1]
             print("Event point:", event.centre, "Event pointer: ", event.leaf_pointer)
-            vanishing_leaf = event.leaf_pointer
-            print(vanishing_leaf.centre)
-            root = handle_circle_event(vanishing_leaf, root, Q, dcel)
+            #vanishing_leaf = event.leaf_pointer
+            root = handle_circle_event(event, sweepline,root, Q, dcel)
         else:
             continue
 
-        print(Q.all_events)
-    print(root.show_all_leafs())
+    print("DCEL vertices:", [ (v.x, v.y) for v in dcel.vertices])
+    print("DCEL faces:", [f.centre for f in dcel.faces])
+    print("DCEL half-edges:", len(dcel.half_edges))
+
+    fig, ax = plt.subplots()  # Create a figure containing a single Axes.
+    x = []
+    y=[]
+    for point in points:
+        x.append(point[0])
+        y.append(point[1])
+    plt.scatter(x, y)
+    plt.savefig("my_voronoi_diagram.png")
     #st.scatter_chart(points)
 
 if __name__ == '__main__':

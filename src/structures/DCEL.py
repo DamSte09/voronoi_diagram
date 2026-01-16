@@ -61,6 +61,10 @@ class DCEL:
         self.half_edges.extend([he1, he1.twin, he2, he2.twin])
 
         return new_subtree
+    
+    def add_vertex(self, point):
+        v = Vertex(point)
+        self.vertices.append(v)
         
     def bound_area(self):
         min_x = min(p[0] for p in self.points)

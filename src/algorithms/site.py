@@ -11,9 +11,9 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
         print("First met point: ", root.node.centre)
         return root 
             
-    # Finds leaf of arc from beach line above the new point
+    # 2. Finds leaf of arc from beach line above the new point
     arc_above = find_arc_above(root, new_event, y_sweep)
-    print("point of arc above: ", arc_above.centre)
+    print("Point representing arc above the new event: ", arc_above.centre)
 
     # Removes false alarm
     if arc_above.circle_event is not None:
@@ -38,14 +38,12 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
 
     print("Left arc of a new subtree root:", new_subtree.left_point) 
     print("Middle arc:", new_subtree.right_child.left_child.centre)
-    print("Right arc:", new_subtree.right_point)
+    print("Right arc:", new_subtree.right_child.right_child.centre)
 
-    #new_subtree = dcel.add_site_halfedges(new_event.centre, new_subtree)
-    print(new_subtree.half_edge, new_subtree.right_child.half_edge)
-
-    print("DCEL faces after added halfedges:", [p.centre for p in dcel.faces])
-    print("DCEL halfedges:", dcel.half_edges)
     
+    dcel.add_site_halfedges(new_event.centre, new_subtree)
+
+    # 4. step, checking circle events for new triplets
     # Finding predecessor and successor
     left_neighbour = new_subtree.left_child.predecessor()
     right_neighbour = new_subtree.right_child.right_child.successor()
@@ -65,8 +63,6 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
             right_neighbour,
         ]
         check_circle_event(right_three_arcs, y_sweep, queue)
-
-    root.show_all_leafs()
 
     return root
 
@@ -119,7 +115,6 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list, dcel: DCEL):
     left_leaf.parent = subtree_root
 
     # Right node of the subtree
-    # THERE SHOULD BE CHECKING INTERSECTION BETWEEN POINTS but not now
     right_node = Node(
         left_point=mid_leaf.centre, right_point=right_leaf.centre
     )
@@ -147,7 +142,7 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list, dcel: DCEL):
     # edge_BA.origin = BA
 
     edge_AB.origin = None
-    edge_AB.origin = None
+    edge_BA.origin = None
 
     face_A = dcel.add_face(A)
     face_B = dcel.add_face(B) 
@@ -173,33 +168,36 @@ def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep: float,
     
     :param three_next_leafs: List of 3 next leafs
     """
+    print("Checking circle event for points:", [leaf.centre for leaf in three_next_leafs])
     a, b, c = three_next_leafs
     A = a.centre
     B = b.centre
     C = c.centre
     
-    # Are points are collinear
+    if getattr(b, "circle_event", None) is not None:
+        queue.remove_from_queue(b.circle_event)
+        b.circle_event = None
+
     EPS = 1e-9
     det = (B[0] - A[0])*(C[1] - A[1]) - (B[1] - A[1])*(C[0] - A[0])
 
-    if abs(det)< EPS:
-        print("Points are collinear")
+    if det >= -EPS:
+        print("Points are not in clockwise order or are collinear:", A, B, C)
         return
-    
-
     
     # Counting centre of a circle
     ux, uy = CircleEvent.compute_circle_center(A, B, C)
-    if ux is None or uy is None:
-        return
-    print("CC", ux, uy)
 
-    # Are points are in good orientation
-    if not CircleEvent.check_clockwise(A, B, C, (ux, uy)):
+    if ux is None or uy is None:
+        print("Circle center is None for points:", A, B, C)
         return
+    
+    print("Circle center for points", A, B, C, "is:", (ux, uy))
 
     # Radius of circle
-    radius = math.sqrt( ( ux - A[0] ) ** 2 + (uy - A[1])**2)
+    dx = ux - B[0] 
+    dy = uy - B[1] 
+    radius = math.hypot(dx, dy)
 
     event_y = uy - radius # lowest point of circle
     
@@ -207,17 +205,15 @@ def check_circle_event(three_next_leafs: list[Leaf, Leaf, Leaf], y_sweep: float,
     if not math.isfinite(event_y) or event_y >= y_sweep:
         return
     
-    if getattr(b, "circle_event", None) is not None:
-        queue.remove_from_queue(b.circle_event)
-        b.circle_event = None
-
     # Adding middle point as a pointer, bc middle arc will be the one which dissapears
-    point = (ux, uy)
+    point = (ux, event_y)
     event = CircleEvent(point= point, leaf_pointer=b)
     event.radius = radius
+    event.circle_center = (ux, uy)
     event.triple_arcs = three_next_leafs
     event.triple_points = (A, B, C)
 
     b.circle_event = event
 
     queue.insert_event(event)
+    print("Added circle event for point:", point, "with radius:", radius)

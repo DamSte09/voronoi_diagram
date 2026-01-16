@@ -42,6 +42,7 @@ class CircleEvent:
         self.centre = point
         self.leaf_pointer = leaf_pointer
         self.radius = None
+        self.circle_center = None
         self.is_valid = True
         self.triple_points = None
         self.triple_arcs = None

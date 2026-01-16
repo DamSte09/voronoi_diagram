@@ -5,95 +5,93 @@ from src.structures.DCEL import DCEL, Vertex, HalfEdge, Face
 from src.structures.BST import Leaf, Node, Root
 from src.algorithms.site import check_circle_event
 
-def handle_circle_event(y: Leaf, root: Root, queue: EventsQueue, dcel: DCEL):
-    left_leaf = y.predecessor()
-    right_leaf = y.successor()
-
-    if left_leaf is None or right_leaf is None:
-        return root
-    
-    A = left_leaf.centre
-    B = y.centre
-    C = right_leaf.centre
-    
-    print(f"A: {A}, B: {B}, C:{C}")
-
-    # should only happen when only B vanished
-    cc = CircleEvent.compute_circle_center(A, B, C)
-    print("Center of a circle: ", cc)
-
-    if cc is None or any(math.isinf(c) or math.isnan(c) for c in cc):
-        print("Circle center does not exist")
-        return root
-    
-    ux, uy = cc
-    r = math.dist(cc, B) 
-    if not math.isfinite(r) or r <= 0:
-        return root
-    y_sweep = uy - r
-    
-    left_bp = left_leaf.parent
-    right_bp = right_leaf.parent
-    if left_bp is None or right_bp is None:
+def handle_circle_event(
+    event: CircleEvent, y_sweep: float, root: Root, queue: EventsQueue, dcel: DCEL
+):
+    # 1. Walidacja zdarzenia
+    arc = event.leaf_pointer
+    if arc is None or arc.circle_event is not event or not event.is_valid:
         return root
 
-    h_left = getattr(left_bp, "half_edge", None)
-    h_right = getattr(right_bp, "half_edge", None)
-    if h_left is None or h_right is None:
+    # 2. Sąsiedzi
+    left_arc = arc.predecessor()
+    right_arc = arc.successor()
+
+    if left_arc is None or right_arc is None:
         return root
 
-    V_cc = Vertex(cc)
-    dcel.vertices.append(V_cc)
+    # 3. Tworzymy wierzchołek Voronoi
+    v = Vertex(event.circle_center)
+    dcel.vertices.append(v)
 
-    for neighbor in (left_leaf, right_leaf):
-        ev = getattr(neighbor, "circle_event", None)
-        if ev is not None:
-            queue.remove_from_queue(ev)
-            neighbor.circle_event = None
+    # 4. Domykamy half-edge’y breakpointów (a,b) i (b,c)
+    # Szukamy węzłów BST, które odpowiadają tym breakpointom
+    parent = arc.parent
 
-    root = root.replace_vanishing_leaf(y, A, C)
+    # breakpoint (a, b)
+    if isinstance(parent, Node):
+        if parent.left_point == left_arc.centre and parent.right_point == arc.centre:
+            he1 = parent.half_edge
+        elif parent.left_point == arc.centre and parent.right_point == right_arc.centre:
+            he1 = parent.half_edge
+        else:
+            he1 = None
+    else:
+        he1 = None
 
-    new_he = HalfEdge()
-    new_het = HalfEdge()
-    new_he.twin = new_het
-    new_het.twin = new_he
+    if he1 is not None:
+        he1.origin = v
+        he1.twin.origin = v
 
-    new_he.origin = V_cc
-    h_right = V_cc
+    # 5. Usuwamy łuk z beachline
+    root.replace_vanishing_leaf(arc, left_arc.centre, right_arc.centre)
 
-    h_left.next = new_he
-    new_he.prev = h_left
+    # 6. Nowy breakpoint (a, c) → nowa krawędź Voronoi
+    he_ac = HalfEdge()
+    he_ca = HalfEdge()
 
-    new_het.next = h_right
-    h_right.prev = new_het
+    he_ac.twin = he_ca
+    he_ca.twin = he_ac
 
-    new_het.prev = None
+    he_ac.origin = v
+    he_ca.origin = v
 
-    if hasattr(h_left, "face"):
-        new_he.face = h_left.face
-    if hasattr(h_right, "face"):
-        new_het.face = h_right.face
+    face_a = dcel.add_face(left_arc.centre)
+    face_c = dcel.add_face(right_arc.centre)
 
-    dcel.half_edges.append(new_he)
-    dcel.half_edges.append(new_het)
+    he_ac.face = face_c
+    he_ca.face = face_a
 
-    right_n = right_leaf.successor()
-    left_n = left_leaf.predecessor()
+    dcel.half_edges.extend([he_ac, he_ca])
 
-    if right_n is not None:
-        check_circle_event([left_leaf, right_leaf, right_n], y_sweep, queue)
-    if left_n is not None:
-        check_circle_event([left_n, left_leaf, right_leaf], y_sweep, queue)
+    # Nowy breakpoint MUSI trafić do odpowiedniego Node w BST
+    # Szukamy lowest common ancestor left_arc i right_arc
+    curr = left_arc
+    while curr.parent and (
+        curr.parent.left_point != left_arc.centre
+        or curr.parent.right_point != right_arc.centre
+    ):
+        curr = curr.parent
+
+    if isinstance(curr.parent, Node):
+        curr.parent.half_edge = he_ac
+
+    # 7. Unieważniamy stare zdarzenia kołowe
+    if left_arc.circle_event:
+        queue.remove_from_queue(left_arc.circle_event)
+        left_arc.circle_event = None
+
+    if right_arc.circle_event:
+        queue.remove_from_queue(right_arc.circle_event)
+        right_arc.circle_event = None
+
+    # 8. Sprawdzamy nowe circle eventy
+    left_left = left_arc.predecessor()
+    if left_left:
+        check_circle_event([left_left, left_arc, right_arc], y_sweep, queue)
+
+    right_right = right_arc.successor()
+    if right_right:
+        check_circle_event([left_arc, right_arc, right_right], y_sweep, queue)
 
     return root
-
-
-    
-    
-    
-    
-    
-    
-    
-
-    

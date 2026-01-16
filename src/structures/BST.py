@@ -180,4 +180,31 @@ class Leaf:
 
         return curr
 
-    
+    @staticmethod
+    def remove_leaf(leaf: Leaf, root_obj: Root):
+        if leaf.parent is None:
+            # Jeśli liść jest jedynym elementem w drzewie
+            root_obj.node = None
+            return
+
+        parent = leaf.parent
+        grandparent = parent.parent
+        
+        # Wybieramy "brata" usuwanego liścia (drugie dziecko rodzica)
+        sibling = parent.right_child if parent.left_child == leaf else parent.left_child
+        
+        if grandparent is None:
+            # Rodzic był korzeniem, teraz brat staje się nowym korzeniem
+            root_obj.node = sibling
+            sibling.parent = None
+        else:
+            # Podpinamy brata bezpośrednio do dziadka
+            if grandparent.left_child == parent:
+                grandparent.left_child = sibling
+            else:
+                grandparent.right_child = sibling
+            sibling.parent = grandparent
+
+        # Opcjonalne: Czyszczenie referencji dla garbage collectora
+        leaf.parent = None
+        parent.left_child = parent.right_child = parent.parent = None
