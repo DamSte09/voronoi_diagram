@@ -25,73 +25,82 @@ class Root:
 
 
     # TO JEST PROBLEMEM, NIE USUWA POPRAWNIE LIŚCI
-    def replace_vanishing_leaf(self, leaf, left_point, right_point):
-        """Removes fading leaf which represent fading arc in BST
-        After leaf is removed, points in grandparent node are updated.
-
-        :param leaf: Leaf which represnts fading arc
+    def replace_vanishing_leaf(self, leaf: Leaf):
         """
-        # parent of leaf
-        leaf_parent = leaf.parent
-        if leaf_parent is None:
+        Removes a leaf representing a disappearing arc from the beachline BST.
+        Structural operation only — no geometry is handled here.
+        """
+
+        parent = leaf.parent
+        if parent is None:
+            # Jedyny element w drzewie
+            self.node = None
             return
 
-        # Find which child is sibling of a leaf
-        if leaf_parent.left_child == leaf:
-            replacement = leaf_parent.right_child
+        # Sibling (drugie dziecko rodzica)
+        if parent.left_child is leaf:
+            sibling = parent.right_child
         else:
-            replacement = leaf_parent.left_child
+            sibling = parent.left_child
 
-        grand = leaf_parent.parent
+        grandparent = parent.parent
 
-        # Is leaf_parent root
-        if grand is None:
-            replacement.parent = None
-            self.node = replacement
+        # 1. Podpinamy sibling zamiast parent
+        sibling.parent = grandparent
+
+        if grandparent is None:
+            # parent był rootem
+            self.node = sibling
         else:
-            # Grandparent is now parent of replacement
-            replacement.parent = grand
-
-            # Check which child new replacement is and replaces child
-            if grand.right_child == leaf_parent:
-                grand.right_child = replacement
+            if grandparent.left_child is parent:
+                grandparent.left_child = sibling
             else:
-                grand.left_child = replacement
+                grandparent.right_child = sibling
 
-        if isinstance(replacement, Node):
-            replacement.left_point = left_point
-            replacement.right_point = right_point
-
-        # Updates points in nodes
-        self._update_points_upwards(replacement)
-
-        # Cleanup
+        # 2. Czyścimy referencje (GC / debug)
         leaf.parent = None
-        leaf_parent.left_child = None
-        leaf_parent.right_child = None
-        leaf_parent.parent = None
-        if leaf.circle_event is not None:
-            # queue.remove_from_queue(leaf.circle_event)
-            leaf.circle_event = None
+        parent.left_child = None
+        parent.right_child = None
+        parent.parent = None
 
-        return self
+        # 3. Aktualizacja breakpointów w górę drzewa
+        self._update_points_upwards(sibling.parent)
 
-    def _update_points_upwards(self, node):
-        current = node
+        return
+
+    def _update_points_upwards(self, start):
+        """
+        Recomputes breakpoint-defining points (left_point, right_point)
+        for all nodes on the path from `start` up to the root.
+        """
+
+        current = start
+
         while current is not None and isinstance(current, Node):
-            # lewe poddrzewo: najbardziej prawy liść
-            left = current.left_child
-            while isinstance(left, Node):
-                left = left.right_child
-            current.left_point = left.centre
+            # --- lewy punkt: najbardziej prawy liść w lewym poddrzewie ---
+            left_sub = current.left_child
+            while isinstance(left_sub, Node):
+                left_sub = left_sub.right_child
 
-            # prawe poddrzewo: najbardziej lewy liść
-            right = current.right_child
-            while isinstance(right, Node):
-                right = right.left_child
-            current.right_point = right.centre
+            if left_sub is None:
+                # struktura chwilowo niepełna — nie aktualizujemy
+                pass
+            else:
+                current.left_point = left_sub.centre
 
+            # --- prawy punkt: najbardziej lewy liść w prawym poddrzewie ---
+            right_sub = current.right_child
+            while isinstance(right_sub, Node):
+                right_sub = right_sub.left_child
+
+            if right_sub is None:
+                pass
+            else:
+                current.right_point = right_sub.centre
+
+            # idziemy wyżej
             current = current.parent
+
 
 class Node:
     """Break point on beachline, keeps 2 sorted centres by x,

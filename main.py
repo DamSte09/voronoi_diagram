@@ -40,15 +40,61 @@ def main():
     print("DCEL faces:", [f.centre for f in dcel.faces])
     print("DCEL half-edges:", len(dcel.half_edges))
 
+    print("Count of vertices:", len(dcel.vertices))
+
     fig, ax = plt.subplots()  # Create a figure containing a single Axes.
     x = []
     y=[]
+    vx = []
+    vy = []
     for point in points:
         x.append(point[0])
         y.append(point[1])
+    for v in dcel.vertices:
+        vx.append(v.x)
+        vy.append(v.y)
     plt.scatter(x, y)
+    plt.scatter(vx, vy, c='red')
     plt.savefig("my_voronoi_diagram.png")
     #st.scatter_chart(points)
+    plot_voronoi(points, dcel)
+import matplotlib.pyplot as plt
 
+
+def plot_voronoi(points, dcel, filename="my_voronoi_diagram.png"):
+    fig, ax = plt.subplots(figsize=(10, 10))
+
+    # 1. Rysowanie krawędzi (używamy zbioru, aby nie rysować dwa razy tej samej linii)
+    seen_edges = set()
+    for he in dcel.half_edges:
+        if he.origin and he.twin and he.twin.origin:
+            # Tworzymy unikalny identyfikator krawędzi niezależny od kierunku
+            edge_id = tuple(sorted([id(he), id(he.twin)]))
+            if edge_id not in seen_edges:
+                x_vals = [he.origin.x, he.twin.origin.x]
+                y_vals = [he.origin.y, he.twin.origin.y]
+                ax.plot(x_vals, y_vals, color="forestgreen", linewidth=1.5, zorder=1)
+                seen_edges.add(edge_id)
+
+    # 2. Rysowanie wierzchołków Voronoi (red)
+    vx = [v.x for v in dcel.vertices]
+    vy = [v.y for v in dcel.vertices]
+    ax.scatter(vx, vy, c="red", s=20, label="Voronoi vertices", zorder=2)
+
+    # 3. Rysowanie punktów generatorów (blue)
+    px, py = zip(*points)  # Krótszy zapis rozpakowania listy punktów
+    ax.scatter(px, py, c="blue", s=40, marker="o", label="Sites", zorder=3)
+
+    # Estetyka wykresu
+    ax.set_aspect("equal")
+    ax.set_title("Diagram Voronoi (DCEL)", fontsize=14)
+    ax.grid(True, linestyle=":", alpha=0.6)
+    ax.legend(loc="upper right", frameon=True, shadow=True)
+
+    # Dodanie marginesów
+    plt.tight_layout()
+
+    plt.savefig(filename, dpi=300)
+    plt.show()
 if __name__ == '__main__':
     main()

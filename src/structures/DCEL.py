@@ -19,11 +19,8 @@ class Face:
 class HalfEdge:
     def __init__(self):
         self.origin = None
-
         self.twin = None
-
         self.face = None
-
         self.next = None
         self.prev = None
 
