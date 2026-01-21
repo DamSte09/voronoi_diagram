@@ -23,8 +23,6 @@ class Root:
         
         print("All centres from leaves: ", [leaf.centre for leaf in all_leafs])
 
-
-    # TO JEST PROBLEMEM, NIE USUWA POPRAWNIE LIŚCI
     def replace_vanishing_leaf(self, leaf: Leaf):
         """
         Removes a leaf representing a disappearing arc from the beachline BST.
