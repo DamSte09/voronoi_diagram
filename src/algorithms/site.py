@@ -21,10 +21,12 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
         arc_above.circle_event = None
 
     parent_arc_above = arc_above.parent
+    
 
     # Replace leaf with arc above with new subtree
     new_subtree = replace_with_subtree(arc_above, new_event.centre, dcel)
-
+    root.rebalance_upwards(new_subtree)
+    
     if parent_arc_above is None:
         root.node = new_subtree
         new_subtree.parent = None

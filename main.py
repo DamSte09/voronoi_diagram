@@ -21,16 +21,17 @@ def main():
     # for _ in range():
         event = Q.all_events.pop(0)
 
-        print('\n')
-        print("New event point:", event.centre)
-        print('\n')
+
     
         if isinstance(event, SiteEvent):
             sweepline = event.centre[1]
+            print('\n')
+            print("New site event point:", event.centre)
+            print('\n')
             root = handle_site_event(root, event, queue=Q, dcel=dcel, y_sweep=sweepline)
         elif isinstance(event, CircleEvent) and event.is_valid:
             sweepline = event.centre[1]
-            print("Event point:", event.centre, "Event pointer: ", event.leaf_pointer)
+            print("Circle Event point:", event.centre, "Event pointer: ", event.leaf_pointer)
             #vanishing_leaf = event.leaf_pointer
             root = handle_circle_event(event, sweepline,root, Q, dcel)
         else:
@@ -39,10 +40,20 @@ def main():
     print("DCEL vertices:", [ (v.x, v.y) for v in dcel.vertices])
     print("DCEL faces:", [f.centre for f in dcel.faces])
     print("DCEL half-edges:", len(dcel.half_edges))
+    print("Total vertex count:", len(dcel.vertices))
 
+    root.show_all_leafs()
+    root.print_tree()
     fig, ax = plt.subplots()  # Create a figure containing a single Axes.
     x = []
     y=[]
+    vx = []
+    vy = []
+    for v in dcel.vertices:
+        vx.append(v.x)
+        vy.append(v.y)
+    ax.scatter(vx, vy, color='red')  # Plot some data on the axes.
+
     for point in points:
         x.append(point[0])
         y.append(point[1])

@@ -44,7 +44,8 @@ def handle_circle_event(
         he1.twin.origin = v
 
     # 5. Usuwamy łuk z beachline
-    root.replace_vanishing_leaf(arc, left_arc.centre, right_arc.centre)
+    root.replace_vanishing_leaf(arc)
+    
 
     # 6. Nowy breakpoint (a, c) → nowa krawędź Voronoi
     he_ac = HalfEdge()
@@ -93,5 +94,6 @@ def handle_circle_event(
     right_right = right_arc.successor()
     if right_right:
         check_circle_event([left_arc, right_arc, right_right], y_sweep, queue)
+
 
     return root

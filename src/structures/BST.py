@@ -24,74 +24,187 @@ class Root:
         print("All centres from leaves: ", [leaf.centre for leaf in all_leafs])
 
 
-    # TO JEST PROBLEMEM, NIE USUWA POPRAWNIE LIŚCI
-    def replace_vanishing_leaf(self, leaf, left_point, right_point):
-        """Removes fading leaf which represent fading arc in BST
-        After leaf is removed, points in grandparent node are updated.
+    def height(self, node):
+        if node is None or isinstance(node, Leaf):
+            return 0
+        return 1 + max(self.height(node.left_child), self.height(node.right_child))
 
-        :param leaf: Leaf which represnts fading arc
-        """
-        # parent of leaf
-        leaf_parent = leaf.parent
-        if leaf_parent is None:
+    def balance_factor(self, node):
+        if not isinstance(node, Node):
+            return 0
+        return self.height(node.left_child) - self.height(node.right_child)
+
+    def update_node_points(self, node):
+        if not isinstance(node, Node):
             return
 
-        # Find which child is sibling of a leaf
-        if leaf_parent.left_child == leaf:
-            replacement = leaf_parent.right_child
-        else:
-            replacement = leaf_parent.left_child
+        left = node.left_child
+        while isinstance(left, Node):
+            left = left.right_child
+        node.left_point = left.centre
 
-        grand = leaf_parent.parent
-
-        # Is leaf_parent root
-        if grand is None:
-            replacement.parent = None
-            self.node = replacement
-        else:
-            # Grandparent is now parent of replacement
-            replacement.parent = grand
-
-            # Check which child new replacement is and replaces child
-            if grand.right_child == leaf_parent:
-                grand.right_child = replacement
-            else:
-                grand.left_child = replacement
-
-        if isinstance(replacement, Node):
-            replacement.left_point = left_point
-            replacement.right_point = right_point
-
-        # Updates points in nodes
-        self._update_points_upwards(replacement)
-
-        # Cleanup
-        leaf.parent = None
-        leaf_parent.left_child = None
-        leaf_parent.right_child = None
-        leaf_parent.parent = None
-        if leaf.circle_event is not None:
-            # queue.remove_from_queue(leaf.circle_event)
-            leaf.circle_event = None
-
-        return self
+        right = node.right_child
+        while isinstance(right, Node):
+            right = right.left_child
+        node.right_point = right.centre
 
     def _update_points_upwards(self, node):
-        current = node
-        while current is not None and isinstance(current, Node):
-            # lewe poddrzewo: najbardziej prawy liść
-            left = current.left_child
-            while isinstance(left, Node):
-                left = left.right_child
-            current.left_point = left.centre
+        curr = node
+        while curr is not None and isinstance(curr, Node):
+            self.update_node_points(curr)
+            curr = curr.parent
 
-            # prawe poddrzewo: najbardziej lewy liść
-            right = current.right_child
-            while isinstance(right, Node):
-                right = right.left_child
-            current.right_point = right.centre
+    def _fix_parents(self, node):
+        if isinstance(node, Node):
+            if node.left_child:
+                node.left_child.parent = node
+            if node.right_child:
+                node.right_child.parent = node
 
-            current = current.parent
+    # ---------- ROTATIONS ----------
+
+    def rotate_left(self, x):
+        y = x.right_child
+        T2 = y.left_child
+
+        y.parent = x.parent
+        if x.parent:
+            if x.parent.left_child == x:
+                x.parent.left_child = y
+            else:
+                x.parent.right_child = y
+
+        y.left_child = x
+        x.parent = y
+        x.right_child = T2
+        if T2:
+            T2.parent = x
+
+        self.update_node_points(x)
+        self.update_node_points(y)
+        return y
+
+    def rotate_right(self, y):
+        x = y.left_child
+        T2 = x.right_child
+
+        x.parent = y.parent
+        if y.parent:
+            if y.parent.left_child == y:
+                y.parent.left_child = x
+            else:
+                y.parent.right_child = x
+
+        x.right_child = y
+        y.parent = x
+        y.left_child = T2
+        if T2:
+            T2.parent = y
+
+        self.update_node_points(y)
+        self.update_node_points(x)
+        return x
+
+    # ---------- AVL ----------
+
+    def balance_node(self, node):
+        bf = self.balance_factor(node)
+
+        if bf > 1:
+            if self.balance_factor(node.left_child) < 0:
+                node.left_child = self.rotate_left(node.left_child)
+            return self.rotate_right(node)
+
+        if bf < -1:
+            if self.balance_factor(node.right_child) > 0:
+                node.right_child = self.rotate_right(node.right_child)
+            return self.rotate_left(node)
+
+        return node
+
+    def rebalance_upwards(self, start):
+        curr = start
+        while curr:
+            parent = curr.parent
+            new = self.balance_node(curr)
+            self._fix_parents(new)
+
+            if new.parent is None:
+                self.node = new
+            curr = parent
+
+    # ---------- REMOVE LEAF (CIRCLE EVENT) ----------
+
+    def replace_vanishing_leaf(self, leaf: Leaf):
+        parent = leaf.parent
+        if parent is None:
+            self.node = None
+            return
+
+        sibling = parent.left_child if parent.right_child == leaf else parent.right_child
+        grand = parent.parent
+
+        if grand is None:
+            sibling.parent = None
+            self.node = sibling
+            start = sibling
+        else:
+            sibling.parent = grand
+            if grand.left_child == parent:
+                grand.left_child = sibling
+            else:
+                grand.right_child = sibling
+            start = grand
+
+        leaf.parent = None
+        parent.left_child = None
+        parent.right_child = None
+        parent.parent = None
+
+        self._update_points_upwards(start)
+        self.rebalance_upwards(start)
+
+    def print_tree(self):
+        """Czytelny wydruk struktury drzewa (Node / Leaf)"""
+
+        def _print(node, prefix="", is_left=True):
+            if node is None:
+                return
+
+            connector = "├── " if is_left else "└── "
+
+            if isinstance(node, Leaf):
+                print(prefix + connector + f"Leaf {tuple(node.centre)}")
+            else:
+                print(
+                    prefix
+                    + connector
+                    + f"Node L={tuple(node.left_point)} R={tuple(node.right_point)}"
+                )
+
+                next_prefix = prefix + ("│   " if is_left else "    ")
+                _print(node.left_child, next_prefix, True)
+                _print(node.right_child, next_prefix, False)
+
+        print("\nBeachline tree:")
+        _print(self.node, "", False)
+
+
+    def collect_leaves_inorder(node):
+        leaves = []
+
+        def dfs(n):
+            if n is None:
+                return
+            if isinstance(n, Leaf):
+                leaves.append(n)
+            else:
+                dfs(n.left_child)
+                dfs(n.right_child)
+
+        dfs(node)
+        return leaves
+
 
 class Node:
     """Break point on beachline, keeps 2 sorted centres by x,
