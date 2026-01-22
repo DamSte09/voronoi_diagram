@@ -243,8 +243,7 @@ def check_circle_event(arcs: list[Leaf], y_sweep: float, queue: EventsQueue):
     # det < 0 → clockwise
     det = (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0])
 
-    EPS = 1e-12
-    if det >= -EPS:
+    if det > 0:
         return
 
     # --- środek okręgu ---

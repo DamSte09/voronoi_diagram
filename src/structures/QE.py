@@ -53,24 +53,31 @@ class CircleEvent:
         return False
     
     @staticmethod
-    def compute_circle_center(A, B, C):
-        Ax, Ay = A
-        Bx, By = B
-        Cx, Cy = C
-        d = 2 * (Ax * (By - Cy) + Bx * (Cy - Ay) + Cx * (Ay - By))
-
-        if d == 0:
+    def compute_circle_center(a, b, c):
+        det = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+        if det > 0:
             return None, None
 
-        ux = ((Ax**2 + Ay**2)*(By - Cy) +
-            (Bx**2 + By**2)*(Cy - Ay) +
-            (Cx**2 + Cy**2)*(Ay - By)) / d
-        uy = ((Ax**2 + Ay**2)*(Cx - Bx) +
-            (Bx**2 + By**2)*(Ax - Cx) +
-            (Cx**2 + Cy**2)*(Bx - Ax)) / d
-        print("Circle center:", ux, uy)
+        ax, ay = a
+        bx, by = b
+        cx, cy = c
 
-        return ux, uy
+        A = bx - ax
+        B = by - ay
+        C = cx - ax
+        D = cy - ay
+
+        E = A * (ax + bx) + B * (ay + by)
+        F = C * (ax + cx) + D * (ay + cy)
+        G = 2 * (A * (cy - by) - B * (cx - bx))
+
+        if G == 0:
+            return None, None
+
+        ox = (D * E - B * F) / G
+        oy = (A * F - C * E) / G
+        print("Circle center:", ox, oy)
+        return ox, oy
 
     @staticmethod
     def _calculate_angle(point, center):
