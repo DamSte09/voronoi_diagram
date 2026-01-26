@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from logging import root
 import math
 import queue
+
+from src.structures.QE import SiteEvent
 
 class Root:
     def __init__(self, node=None):
@@ -99,6 +102,26 @@ class Root:
             # idziemy wyżej
             current = current.parent
 
+    def find_arc_above(root, event: SiteEvent, y_sweep: float):
+        curr = root.node
+        x = event.centre[0]
+
+        while isinstance(curr, Node):
+            xb = curr.count_x_breakpoint(y_sweep)
+            print("Breakpoint x for points ", curr.left_point, curr.right_point, " at y=", y_sweep, " is ", xb)
+            if xb is None:
+                raise RuntimeError(
+                    f"Invalid breakpoint for points "
+                    f"{curr.left_point}, {curr.right_point} at y={y_sweep}"
+                )
+
+            if x < xb:
+                curr = curr.left_child
+            else:
+                curr = curr.right_child
+
+        return curr
+
 
 class Node:
     """Break point on beachline, keeps 2 sorted centres by x,
@@ -113,31 +136,71 @@ class Node:
         self.right_child = None
         self.half_edge = None
 
-    def count_x_breakpoint(self,  y_sweep: float):
-        """Counts x breakpoint for node of 2 points and sweepline on new centre"""
+    def count_x_breakpoint(self, y_sweep: float):
+        """
+        Oblicza współrzędną x punktu przecięcia dwóch parabol.
+        
+        Parameters
+        ----------
+        y_sweep : float
+            Pozycja linii zamiatającej (sweep line)
+        
+        Returns
+        -------
+        float or None
+            Współrzędna x punktu przecięcia lub None jeśli nie istnieje
+        """
         x1, y1 = self.left_point
         x2, y2 = self.right_point
-
+        
+        # Przypadek gdy oba punkty mają tę samą współrzędną y
+        # (breakpoint jest dokładnie pośrodku)
         if y1 == y2:
-                return (x1 + x2) / 2
+            return (x1 + x2) / 2
         
-        a = y2 - y1
-        b = 2 * (-y2 * x1 + y1 * x2 + y_sweep * x1 - y_sweep * x2)
-        c = (y2 - y_sweep) * (x1**2 + y1**2 - y_sweep**2) - (y1 - y_sweep) * (
-            x2**2 + y2**2 - y_sweep**2
-        )
-
-        delta = b*b - 4*a*c
-        if delta < 0 or a == 0:
-                return None 
+        # Przypadek gdy lewy punkt jest na linii zamiatającej
+        if y1 == y_sweep:
+            return x1
         
-        x1_bp = (-b+math.sqrt(delta)) / (2*a)
-        x2_bp = (-b - math.sqrt(delta)) / (2 * a)
-
-        if x1 < x2:
-            return max(x1_bp, x2_bp)  # Prawy breakpoint
-        else:
-            return min(x1_bp, x2_bp)
+        # Przypadek gdy prawy punkt jest na linii zamiatającej
+        if y2 == y_sweep:
+            return x2
+        
+        # Podstawowe współczynniki równania
+        u = 2 * (y1 - y_sweep)
+        v = 2 * (y2 - y_sweep)
+        
+        # Sprawdzenie czy któryś mianownik jest zerem (parabola zdegenerowana)
+        if u == 0 or v == 0:
+            return None
+        
+        # Rozwiązanie równania kwadratowego:
+        # 1/u * (x² - 2*x1*x + x1² + y1² - y_sweep²) = 1/v * (x² - 2*x2*x + x2² + y2² - y_sweep²)
+        
+        # Po przekształceniu do postaci: (u-v)x² + 2(x2*v - x1*u)x + ... = 0
+        # zgodnie z algorytmem Wolframa Alpha użytym w foronoi:
+        
+        a = u - v
+        
+        if a == 0:
+            return None
+        
+        # Obliczenie pierwiastka z wzoru z foronoi
+        # x = -(sqrt(v * (x1² * u - 2*x1*x2*u + y1²*(u-v) + x2²*u) + y2²*u*(v-u) + y_sweep²*(u-v)²) + x1*v - x2*u) / (u-v)
+        
+        term1 = x1**2 * u - 2*x1*x2*u + y1**2*(u-v) + x2**2*u
+        term2 = y2**2 * u * (v-u)
+        term3 = y_sweep**2 * (u-v)**2
+        
+        discriminant = v * term1 + term2 + term3
+        
+        if discriminant < 0:
+            return None
+        
+        sqrt_term = math.sqrt(discriminant)
+        x = -(sqrt_term + x1*v - x2*u) / a
+        
+        return x
 
 
 class Leaf:
@@ -186,32 +249,3 @@ class Leaf:
             curr = curr.left_child
 
         return curr
-
-    @staticmethod
-    def remove_leaf(leaf: Leaf, root_obj: Root):
-        if leaf.parent is None:
-            # Jeśli liść jest jedynym elementem w drzewie
-            root_obj.node = None
-            return
-
-        parent = leaf.parent
-        grandparent = parent.parent
-        
-        # Wybieramy "brata" usuwanego liścia (drugie dziecko rodzica)
-        sibling = parent.right_child if parent.left_child == leaf else parent.left_child
-        
-        if grandparent is None:
-            # Rodzic był korzeniem, teraz brat staje się nowym korzeniem
-            root_obj.node = sibling
-            sibling.parent = None
-        else:
-            # Podpinamy brata bezpośrednio do dziadka
-            if grandparent.left_child == parent:
-                grandparent.left_child = sibling
-            else:
-                grandparent.right_child = sibling
-            sibling.parent = grandparent
-
-        # Opcjonalne: Czyszczenie referencji dla garbage collectora
-        leaf.parent = None
-        parent.left_child = parent.right_child = parent.parent = None

@@ -3,7 +3,6 @@ import math
 from src.structures.QE import EventsQueue, CircleEvent
 from src.structures.DCEL import DCEL, Vertex, HalfEdge, Face
 from src.structures.BST import Leaf, Node, Root
-from src.algorithms.site import check_circle_event
 
 def handle_circle_event(
     event: CircleEvent, y_sweep: float, root: Root, queue: EventsQueue, dcel: DCEL
@@ -74,10 +73,9 @@ def handle_circle_event(
     # 8. Sprawdzamy nowe circle eventy
     left_left = left_arc.predecessor()
     if left_left:
-        check_circle_event([left_left, left_arc, right_arc], y_sweep, queue)
+        CircleEvent.check_circle_event([left_left, left_arc, right_arc], y_sweep, queue)
 
     right_right = right_arc.successor()
     if right_right:
-        check_circle_event([left_arc, right_arc, right_right], y_sweep, queue)
-
+        CircleEvent.check_circle_event([left_arc, right_arc, right_right], y_sweep, queue)
     return root

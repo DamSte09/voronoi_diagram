@@ -12,7 +12,7 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
         return root 
             
     # 2. Finds leaf of arc from beach line above the new point
-    arc_above = find_arc_above(root, new_event, y_sweep)
+    arc_above = Root.find_arc_above(root, new_event, y_sweep)
     print("Point representing arc above the new event: ", arc_above.centre)
 
     # Removes false alarm
@@ -55,7 +55,7 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
             new_subtree.left_child,
             new_subtree.right_child.left_child,
         ]
-        check_circle_event(left_three_arcs, y_sweep, queue)
+        CircleEvent.check_circle_event(left_three_arcs, y_sweep, queue)
 
     if right_neighbour:
         right_three_arcs = [
@@ -63,27 +63,10 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
             new_subtree.right_child.right_child,
             right_neighbour,
         ]
-        check_circle_event(right_three_arcs, y_sweep, queue)
+        CircleEvent.check_circle_event(right_three_arcs, y_sweep, queue)
 
     return root
 
-def find_arc_above(root: Root, event: SiteEvent, y_sweep:float):
-    """Finds arc above new found point by sweepline in BST"""
-    curr = root.node
-    new_point = event.centre
-    while isinstance(curr, Node):
-        print("actual points of node:", curr.left_point, curr.right_point)
-
-        xb = curr.count_x_breakpoint(y_sweep)
-        print("breakpoint:", xb)
-        
-        if  new_point[0] <= xb:
-            curr = curr.left_child
-        else:
-            curr = curr.right_child
-        
-    print("\nFound leaf above point:", curr.centre, "\n")
-    return curr
 
 def replace_with_subtree1(arc_above: Leaf, new_centre: list, dcel: DCEL) -> Node:
     """
@@ -222,55 +205,3 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list, dcel: DCEL):
     dcel.half_edges.extend([edge_AB, edge_BA])
 
     return subtree_root
-
-def check_circle_event(arcs: list[Leaf], y_sweep: float, queue: EventsQueue):
-    """
-    Checks whether three consecutive arcs generate a valid circle event.
-    If yes, inserts it into the event queue.
-    """
-
-    a, b, c = arcs
-    A = a.centre
-    B = b.centre
-    C = c.centre
-
-    # --- usuwamy stare zdarzenie środkowego łuku ---
-    if b.circle_event is not None:
-        queue.remove_from_queue(b.circle_event)
-        b.circle_event = None
-
-    # --- orientacja: MUSI być zgodna z ruchem wskazówek zegara ---
-    # det < 0 → clockwise
-    det = (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0])
-
-    if det > 0:
-        return
-
-    # --- środek okręgu ---
-    ux, uy = CircleEvent.compute_circle_center(A, B, C)
-    if ux is None or uy is None:
-        return
-
-    # --- promień ---
-    dx = ux - B[0]
-    dy = uy - B[1]
-    radius = math.hypot(dx, dy)
-
-    # --- y zdarzenia (najniższy punkt okręgu) ---
-    event_y = uy - radius
-
-    # zdarzenie musi być poniżej sweep line
-    # if event_y >= y_sweep:
-    #     return
-
-    # --- tworzymy zdarzenie ---
-    event_point = (ux, event_y)
-    event = CircleEvent(point=event_point, leaf_pointer=b)
-    event.circle_center = (ux, uy)
-    event.radius = radius
-    event.triple_arcs = (a, b, c)
-    event.triple_points = (A, B, C)
-    event.is_valid = True
-
-    b.circle_event = event
-    queue.insert_event(event)

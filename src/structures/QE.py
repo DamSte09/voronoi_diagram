@@ -1,4 +1,7 @@
-from src.structures.BST import Leaf
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.structures.QE import Leaf
 import math
 
 class EventsQueue:
@@ -13,12 +16,6 @@ class EventsQueue:
 
         self.all_events = sorted(self.site_events, key = lambda event:event.centre[1], reverse=True)
         
-    def inicialize_queue(self):
-        """Initialize queue by filling up with upcoming site_events and sorts them descending by y"""
-        self.points.sort(key=lambda point:point[1], reverse=True)
-        for point in self.points:
-            self.all_events.append(SiteEvent(point))
-
     def insert_event(self, event):
         self.all_events.append(event)
         self.all_events.sort(key=lambda e: (e.centre[1], 1 if isinstance(e, CircleEvent) else 0))
@@ -38,7 +35,7 @@ class SiteEvent:
 
 
 class CircleEvent:
-    def __init__(self, point: list, leaf_pointer: Leaf):
+    def __init__(self, point: list, leaf_pointer: "Leaf"):
         self.centre = point
         self.leaf_pointer = leaf_pointer
         self.radius = None
@@ -80,14 +77,55 @@ class CircleEvent:
         return ox, oy
 
     @staticmethod
-    def _calculate_angle(point, center):
-        return math.atan2(point[1] - center[1], point[0]- center[0])
+    def check_circle_event(arcs: list(), y_sweep: float, queue: EventsQueue):
+        """
+        Checks whether three consecutive arcs generate a valid circle event.
+        If yes, inserts it into the event queue.
+        """
 
-    @staticmethod
-    def check_clockwise(a, b, c, center):
-        ang_a = CircleEvent._calculate_angle(a, center)
-        ang_b = CircleEvent._calculate_angle(b, center)
-        ang_c = CircleEvent._calculate_angle(c, center)
+        a, b, c = arcs
+        A = a.centre
+        B = b.centre
+        C = c.centre
 
-        return (ang_c - ang_a) % (2 * math.pi) <= (ang_c - ang_b) % (2 * math.pi)
+        # --- usuwamy stare zdarzenie środkowego łuku ---
+        if b.circle_event is not None:
+            queue.remove_from_queue(b.circle_event)
+            b.circle_event = None
+
+        # --- orientacja: MUSI być zgodna z ruchem wskazówek zegara ---
+        # det < 0 → clockwise
+        det = (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0])
+
+        if det > 0:
+            return
+
+        # --- środek okręgu ---
+        ux, uy = CircleEvent.compute_circle_center(A, B, C)
+        if ux is None or uy is None:
+            return
+
+        # --- promień ---
+        dx = ux - B[0]
+        dy = uy - B[1]
+        radius = math.hypot(dx, dy)
+
+        # --- y zdarzenia (najniższy punkt okręgu) ---
+        event_y = uy - radius
+
+        # zdarzenie musi być poniżej sweep line
+        if event_y >= y_sweep:
+            return
+
+        # --- tworzymy zdarzenie ---
+        event_point = (ux, event_y)
+        event = CircleEvent(point=event_point, leaf_pointer=b)
+        event.circle_center = (ux, uy)
+        event.radius = radius
+        event.triple_arcs = (a, b, c)
+        event.triple_points = (A, B, C)
+        event.is_valid = True
+
+        b.circle_event = event
+        queue.insert_event(event)
 
