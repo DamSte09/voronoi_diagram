@@ -134,22 +134,6 @@ class DCEL:
         t = min(t_values)  
         return (x0 + dx * t, y0 + dy * t)
 
-    def fillup_faces(self):
-        for he in self.half_edges:
-            if he.face is None:
-                starting_halfedge = he
-                face = Face()
-                face.outer_component = starting_halfedge
-
-                he = starting_halfedge
-                while True:
-                    he.face = face
-                    he = he.next
-                    if he == starting_halfedge:
-                        break
-
-                self.faces.append(face)
-
 
 
 

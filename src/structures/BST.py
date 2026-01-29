@@ -122,6 +122,36 @@ class Root:
 
         return curr
 
+    def find_breakpoint_nodes(self, leaf: Leaf):
+        """
+        Znajduje dwa węzły (Node), które reprezentują breakpointy 
+        sąsiadujące z liściem (łukiem) w Beach Line.
+        """
+        left_breakpoint = None
+        right_breakpoint = None
+
+        # Idziemy w górę drzewa od liścia
+        current = leaf
+        while current.parent is not None:
+            parent = current.parent
+            
+            # Jeśli przyszliśmy z prawej strony, to parent jest lewym breakpointem
+            if parent.right_child == current:
+                if left_breakpoint is None:
+                    left_breakpoint = parent
+            
+            # Jeśli przyszliśmy z lewej strony, to parent jest prawym breakpointem
+            if parent.left_child == current:
+                if right_breakpoint is None:
+                    right_breakpoint = parent
+            
+            # Jeśli znaleźliśmy oba, możemy przestać (opcjonalne, ale przyspiesza)
+            if left_breakpoint and right_breakpoint:
+                break
+                
+            current = parent
+
+        return left_breakpoint, right_breakpoint
 
 class Node:
     """Break point on beachline, keeps 2 sorted centres by x,
@@ -170,10 +200,6 @@ class Node:
         u = 2 * (y1 - y_sweep)
         v = 2 * (y2 - y_sweep)
         
-        # Sprawdzenie czy któryś mianownik jest zerem (parabola zdegenerowana)
-        if u == 0 or v == 0:
-            return None
-        
         # Rozwiązanie równania kwadratowego:
         # 1/u * (x² - 2*x1*x + x1² + y1² - y_sweep²) = 1/v * (x² - 2*x2*x + x2² + y2² - y_sweep²)
         
@@ -182,8 +208,8 @@ class Node:
         
         a = u - v
         
-        if a == 0:
-            return None
+        if abs(a) < 1e-10:
+            return (x1 + x2) / 2
         
         # Obliczenie pierwiastka z wzoru z foronoi
         # x = -(sqrt(v * (x1² * u - 2*x1*x2*u + y1²*(u-v) + x2²*u) + y2²*u*(v-u) + y_sweep²*(u-v)²) + x1*v - x2*u) / (u-v)
@@ -249,3 +275,31 @@ class Leaf:
             curr = curr.left_child
 
         return curr
+
+    def left_breakpoint_node(self, root: Root) -> Node | None:
+        """Finds left breakpoint Node in BST beachline
+        
+        :return: Node or None if not any
+        """
+        curr = self
+        while curr.parent and curr == curr.parent.left_child:
+            curr = curr.parent
+
+        if not curr.parent:
+            return None
+
+        return curr.parent
+    
+    def right_breakpoint_node(self, root: Root) -> Node | None:
+        """Finds right breakpoint Node in BST beachline
+        
+        :return: Node or None if not any
+        """
+        curr = self
+        while curr.parent and curr == curr.parent.right_child:
+            curr = curr.parent
+
+        if not curr.parent:
+            return None
+
+        return curr.parent

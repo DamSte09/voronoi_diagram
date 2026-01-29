@@ -1,16 +1,17 @@
 import math
-
 from src.structures.QE import EventsQueue, CircleEvent
 from src.structures.DCEL import DCEL, Vertex, HalfEdge, Face
 from src.structures.BST import Leaf, Node, Root
 
+
 def handle_circle_event(
     event: CircleEvent, y_sweep: float, root: Root, queue: EventsQueue, dcel: DCEL
 ):
-    # 1. Walidacja zdarzenia
+    # 1. Walidacja
     arc = event.leaf_pointer
     if arc is None or arc.circle_event != event or not event.is_valid:
         return root
+    arc.circle_event = None
 
     # 2. Sąsiedzi
     left_arc = arc.predecessor()
@@ -18,64 +19,77 @@ def handle_circle_event(
     if left_arc is None or right_arc is None:
         return root
 
-    # 3. Tworzymy wierzchołek Voronoi
+    # 3. Nowy wierzchołek Voronoia
     vertex = Vertex(event.circle_center)
     dcel.vertices.append(vertex)
 
-    # 4. Zamykamy half-edge’y z BST
-    # Szukamy węzłów BST odpowiadających breakpointom
-    parent = arc.parent
-    while parent and not isinstance(parent, Node):
-        parent = parent.parent
+    # 4. Breakpointy (MUSZĄ istnieć)
+    left_bp = left_arc.right_breakpoint_node(root)
+    right_bp = right_arc.left_breakpoint_node(root)
+    if left_bp is None or right_bp is None:
+        return root
 
-    if parent:
-        he = parent.half_edge
-        if he:
-            he.origin = vertex
-            if he.twin:
-                he.twin.origin = vertex
+    he_left = left_bp.half_edge
+    he_right = right_bp.half_edge
+    if he_left is None or he_right is None:
+        return root
 
-    # 5. Usuwamy łuk z beachline
-    # left_point i right_point to centra sąsiadów
+    print("half-edge left origin:", (he_left.origin.x, he_left.origin.y) if he_left.origin else None
+          , "half-edge right origin:", (he_right.origin.x, he_right.origin.y) if he_right.origin else None)
+    
+    # 5. Ustawiamy pochodzenie half-edgów
+    he_left.origin = vertex
+    he_right.origin = vertex
+    vertex.incident_edge.extend([he_left, he_right])
+
+    # 6. Nowa krawędź Voronoia
+    he_new = HalfEdge()
+    he_new.twin = HalfEdge()
+    he_new.origin = vertex
+    he_new.twin.origin = None
+
+    # Połączenie half-edgów w cykl
+    he_left.next = he_new
+    he_new.next = he_right
+    he_right.next = he_new.twin
+    he_new.twin.next = he_left
+    
+    he_left.prev = he_new.twin
+    he_new.prev = he_left
+    he_right.prev = he_new
+    he_new.twin.prev = he_right
+
+    he_new.face = he_left.face
+    he_new.twin.face = he_right.face
+    vertex.incident_edge.extend([he_new, he_new.twin])
+    dcel.half_edges.extend([he_new, he_new.twin])
+
+    # 7. Aktualizacja BST
     root.replace_vanishing_leaf(arc)
 
-    # 6.  Tworzymy nowy breakpoint (left_arc, right_arc)
-    he_ac = HalfEdge()
-    he_ca = HalfEdge()
-    he_ac.twin = he_ca
-    he_ca.twin = he_ac
-    he_ac.origin = vertex
-    he_ca.origin = vertex
+    print("New half-edge origin:", (he_new.origin.x, he_new.origin.y) if he_new.origin else None)
+    print("New half-edge twin origin:", (he_new.twin.origin.x, he_new.twin.origin.y) if he_new.twin.origin else None)
 
-    face_left = dcel.add_face(left_arc.centre)
-    face_right = dcel.add_face(right_arc.centre)
-    he_ac.face = face_right
-    he_ca.face = face_left
-    dcel.half_edges.extend([he_ac, he_ca])
+    if left_arc.parent.half_edge is he_left:
+        left_arc.parent.half_edge = he_new
+    if right_arc.parent.half_edge is he_right:
+        right_arc.parent.half_edge = he_new.twin
 
-    # Przypisujemy half-edge do odpowiedniego Node w BST
-    # W BST szukamy lowest common ancestor left_arc i right_arc
-    curr = left_arc
-    while curr.parent and not (
-        curr.parent.left_child == left_arc or curr.parent.right_child == right_arc
-    ):
-        curr = curr.parent
-    if curr.parent and isinstance(curr.parent, Node):
-        curr.parent.half_edge = he_ac
 
-    # 7. Unieważniamy stare circle eventy sąsiadów
-    for neighbor in [left_arc, right_arc]:
+    # 8. Unieważniamy stare circle eventy sąsiadów
+    for neighbor in (left_arc, right_arc):
         if neighbor.circle_event:
             neighbor.circle_event.is_valid = False
             queue.remove_from_queue(neighbor.circle_event)
             neighbor.circle_event = None
 
-    # 8. Sprawdzamy nowe circle eventy
-    left_left = left_arc.predecessor()
-    if left_left:
-        CircleEvent.check_circle_event([left_left, left_arc, right_arc], y_sweep, queue)
+    # 9. Sprawdzamy nowe circle eventy
+    ll = left_arc.predecessor()
+    if ll:
+        CircleEvent.check_circle_event([ll, left_arc, right_arc], y_sweep, queue)
 
-    right_right = right_arc.successor()
-    if right_right:
-        CircleEvent.check_circle_event([left_arc, right_arc, right_right], y_sweep, queue)
+    rr = right_arc.successor()
+    if rr:
+        CircleEvent.check_circle_event([left_arc, right_arc, rr], y_sweep, queue)
+
     return root
