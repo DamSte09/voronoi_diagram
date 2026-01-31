@@ -10,6 +10,47 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
         root.node = Leaf(new_event.centre)
         print("First met point: ", root.node.centre)
         return root 
+    
+    if root.node is Leaf:
+        existing_leaf = root.node
+        
+        if existing_leaf.centre < new_event.centre:
+            new_subtree = replace_with_subtree(existing_leaf, new_event.centre, dcel)
+        else:
+            new_subtree = replace_with_subtree(existing_leaf, new_event.centre, dcel)
+            def rotate_right(node: Node) -> Node:
+                """
+                Performs a right rotation on a BST node.
+                
+                Before:        After:
+                    node          left_child
+                  LC     RC    LLC       node
+                LLC LRC               LRC      RC
+                
+                :param node: The node to rotate
+                :return: The new root of the subtree (left_child)
+                """
+                left_child = node.left_child
+                
+                # Perform rotation
+                node.left_child = left_child.right_child
+                if left_child.right_child is not None:
+                    left_child.right_child.parent = node
+                
+                left_child.right_child = node
+                left_child.parent = node.parent
+                node.parent = left_child
+                
+                return left_child
+            new_subtree = rotate_right(new_subtree)
+
+
+        root.node = new_subtree
+        new_subtree.parent = None
+        root._update_points_upwards(new_subtree)
+
+        print("Second met point: ", new_event.centre)
+        return root
             
     # 2. Finds leaf of arc from beach line above the new point
     arc_above = Root.find_arc_above(root, new_event, y_sweep)
@@ -175,8 +216,8 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list, dcel: DCEL):
     A, B = point_j, point_i
 
     # Tuple of points representing breakpoint
-    AB = (point_j, point_i)
-    BA = (point_i, point_j)
+    # AB = (point_j, point_i)
+    # BA = (point_i, point_j)
 
     edge_AB = HalfEdge()
     edge_BA = HalfEdge()
@@ -188,7 +229,7 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list, dcel: DCEL):
     edge_BA.origin = None
 
     face_A = dcel.add_face(A)
-    face_B = dcel.add_face(B) 
+    face_B = dcel.add_face(B)
 
     edge_AB.face = face_B
     edge_BA.face = face_A

@@ -77,7 +77,7 @@ class CircleEvent:
         return ox, oy
 
     @staticmethod
-    def check_circle_event(arcs: list(), y_sweep: float, queue: EventsQueue):
+    def check_circle_event(arcs: list, y_sweep: float, queue: EventsQueue):
         """
         Checks whether three consecutive arcs generate a valid circle event.
         If yes, inserts it into the event queue.

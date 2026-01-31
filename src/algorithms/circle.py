@@ -40,14 +40,12 @@ def handle_circle_event(
     # 5. Ustawiamy pochodzenie half-edgów
     he_left.origin = vertex
     he_right.origin = vertex
-    vertex.incident_edge.extend([he_left, he_right])
 
     # 6. Nowa krawędź Voronoia
     he_new = HalfEdge()
     he_new.twin = HalfEdge()
     he_new.origin = vertex
-    he_new.twin.origin = None
-
+    he_new.twin.origin = vertex
     # Połączenie half-edgów w cykl
     he_left.next = he_new
     he_new.next = he_right
@@ -61,8 +59,15 @@ def handle_circle_event(
 
     he_new.face = he_left.face
     he_new.twin.face = he_right.face
-    vertex.incident_edge.extend([he_new, he_new.twin])
+    vertex.incident_edge.extend([he_left, he_right, he_new, he_new.twin])
     dcel.half_edges.extend([he_new, he_new.twin])
+    arc_parent = arc.parent
+    if arc_parent is left_bp:
+        # left_bp will be destroyed → right_bp survives
+        right_bp.half_edge = he_new.twin
+    elif arc_parent is right_bp:
+        # right_bp will be destroyed → left_bp survives
+        left_bp.half_edge = he_new
 
     # 7. Aktualizacja BST
     root.replace_vanishing_leaf(arc)
@@ -70,10 +75,7 @@ def handle_circle_event(
     print("New half-edge origin:", (he_new.origin.x, he_new.origin.y) if he_new.origin else None)
     print("New half-edge twin origin:", (he_new.twin.origin.x, he_new.twin.origin.y) if he_new.twin.origin else None)
 
-    if left_arc.parent.half_edge is he_left:
-        left_arc.parent.half_edge = he_new
-    if right_arc.parent.half_edge is he_right:
-        right_arc.parent.half_edge = he_new.twin
+
 
 
     # 8. Unieważniamy stare circle eventy sąsiadów

@@ -13,7 +13,7 @@ def generatePoints(number_points):
 
 def savePointsToFile(array_points):
     df = pd.DataFrame(array_points)
-    df.to_csv("points.csv", index = False, sep = ";")
+    df.to_csv("sdf.csv", index = False, sep = ";")
     print("Zapisano do pliku")
 
 def readPointsFromFile(path):
@@ -31,20 +31,20 @@ def readPointsFromFile(path):
     return array_points
 
 def main():
-    #print("zaczynam")
-    #points = []
-    #N = 10
+    print("zaczynam")
+    points = []
+    N = 10
 
-    print("Punkty z pliku")
-    points = readPointsFromFile("data/points.csv") 
+    # print("Punkty z pliku")
+    # points = readPointsFromFile("data/points.csv") 
+    # print(points)
+
+    print("Wygenerowane punkty")
+    points = generatePoints(N)
     print(points)
 
-    #print("Wygenerowane punkty")
-    #points = generatePoints(N)
-    #print(points)
 
-
-    #savePointsToFile(points)
+    savePointsToFile(points)
 
     
     #points = np.asarray(points)

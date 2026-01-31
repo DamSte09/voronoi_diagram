@@ -182,6 +182,7 @@ class Node:
         """
         x1, y1 = self.left_point
         x2, y2 = self.right_point
+    
         
         # Przypadek gdy oba punkty mają tę samą współrzędną y
         # (breakpoint jest dokładnie pośrodku)
@@ -200,6 +201,10 @@ class Node:
         u = 2 * (y1 - y_sweep)
         v = 2 * (y2 - y_sweep)
         
+        # Sprawdzenie czy któryś mianownik jest zerem (parabola zdegenerowana)
+        if u == 0 or v == 0:
+            return None
+        
         # Rozwiązanie równania kwadratowego:
         # 1/u * (x² - 2*x1*x + x1² + y1² - y_sweep²) = 1/v * (x² - 2*x2*x + x2² + y2² - y_sweep²)
         
@@ -208,8 +213,8 @@ class Node:
         
         a = u - v
         
-        if abs(a) < 1e-10:
-            return (x1 + x2) / 2
+        if a == 0:
+            return None
         
         # Obliczenie pierwiastka z wzoru z foronoi
         # x = -(sqrt(v * (x1² * u - 2*x1*x2*u + y1²*(u-v) + x2²*u) + y2²*u*(v-u) + y_sweep²*(u-v)²) + x1*v - x2*u) / (u-v)

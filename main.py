@@ -23,6 +23,8 @@ def plot_voronoi(points, dcel, filename="my_voronoi_diagram.png"):
                 ax.plot(x_vals, y_vals, color="forestgreen", linewidth=1.5, zorder=1)
                 seen_edges.add(edge_id)
 
+
+
     # 2. Rysowanie wierzchołków Voronoi (red)
     vx = [v.x for v in dcel.vertices]
     vy = [v.y for v in dcel.vertices]
@@ -73,7 +75,7 @@ def main():
 
     print("DCEL vertices:", [ (v.x, v.y) for v in dcel.vertices])
     print("DCEL faces:", [f.centre for f in dcel.faces])
-    print("DCEL half-edges:", [ (he.origin.x, he.origin.y) for he in dcel.half_edges if he.origin is not None])
+    # print("DCEL half-edges:", [ (he.origin.x, he.origin.y) for he in dcel.half_edges if he.origin is not None])
     # print("Non closed half-edges:", [ (he.origin, he.twin.origin) for he in dcel.half_edges if he.twin.origin is None])
     print("Count of faces:", len(dcel.faces))
     print("Count of half-edges:", len(dcel.half_edges))
@@ -85,6 +87,11 @@ def main():
     for he in dcel.half_edges:
         if he.origin and he.twin and he.twin.origin:
             print(f"  ({he.origin.x}, {he.origin.y}) -> ({he.twin.origin.x}, {he.twin.origin.y})")
+
+    print("Disconnected half-edges:")
+    for he in dcel.half_edges:
+        if he.origin and not he.twin:
+            print(f"  ({he.origin.x}, {he.origin.y}) -> (None)")
 
     fig, ax = plt.subplots()  # Create a figure containing a single Axes.
     x = []
