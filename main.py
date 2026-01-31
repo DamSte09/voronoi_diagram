@@ -55,7 +55,6 @@ def main():
     sweepline = None
     
     while Q.all_events:
-    # for _ in range():
         event = Q.all_events.pop(0)
 
         print('\n')
