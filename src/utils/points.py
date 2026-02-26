@@ -16,12 +16,12 @@ def savePointsToFile(array_points):
     df.to_csv("sdf.csv", index = False, sep = ";")
     print("Zapisano do pliku")
 
-def readPointsFromFile(path):
+def readPointsFromFile(path, sep = ';'):
     array_points = []
 
     try:
         with open(path) as csvfile:
-            reader = csv.reader(csvfile, delimiter =',', quoting=csv.QUOTE_NONNUMERIC)
+            reader = csv.reader(csvfile, delimiter =sep, quoting=csv.QUOTE_NONNUMERIC)
             for row in reader:
                 array_points.append(row)
 
