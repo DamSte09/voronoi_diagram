@@ -51,38 +51,27 @@ class CircleEvent:
     
     @staticmethod
     def compute_circle_center(a, b, c):
+        Ax, Ay = a
+        Bx, By = b
+        Cx, Cy = c
         det = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
-        if det > 0:
+        d = 2 * det
+        if det > 0 or d == 0:
             return None, None
-
-        ax, ay = a
-        bx, by = b
-        cx, cy = c
-
-        A = bx - ax
-        B = by - ay
-        C = cx - ax
-        D = cy - ay
-
-        E = A * (ax + bx) + B * (ay + by)
-        F = C * (ax + cx) + D * (ay + cy)
-        G = 2 * (A * (cy - by) - B * (cx - bx))
-
-        if G == 0:
-            return None, None
-
-        ox = (D * E - B * F) / G
-        oy = (A * F - C * E) / G
-        print("Circle center:", ox, oy)
-        return ox, oy
+        
+        ux = ((Ax**2 + Ay**2)*(By - Cy) +
+            (Bx**2 + By**2)*(Cy - Ay) +
+            (Cx**2 + Cy**2)*(Ay - By)) / d
+        uy = ((Ax**2 + Ay**2)*(Cx - Bx) +
+            (Bx**2 + By**2)*(Ax - Cx) +
+            (Cx**2 + Cy**2)*(Bx - Ax)) / d
+        print("Circle center:", ux, uy)
+        return ux, uy
+        # print("Circle center:", ox, oy)
+        # return ox, oy
 
     @staticmethod
     def check_circle_event(arcs: list, y_sweep: float, queue: EventsQueue):
-        """
-        Checks whether three consecutive arcs generate a valid circle event.
-        If yes, inserts it into the event queue.
-        """
-
         a, b, c = arcs
         A = a.centre
         B = b.centre
@@ -93,14 +82,6 @@ class CircleEvent:
             queue.remove_from_queue(b.circle_event)
             b.circle_event = None
 
-        # --- orientacja: MUSI być zgodna z ruchem wskazówek zegara ---
-        # det < 0 → clockwise
-        det = (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0])
-
-        if det > 0:
-            return
-
-        # --- środek okręgu ---
         ux, uy = CircleEvent.compute_circle_center(A, B, C)
         if ux is None or uy is None:
             return
