@@ -57,17 +57,19 @@ def handle_circle_event(
     he_right.prev = he_new
     he_new.twin.prev = he_right
 
-    he_new.face = he_left.face
-    he_new.twin.face = he_right.face
+    he_new.face = he_right.face
+    he_new.twin.face = he_left.face
     vertex.incident_edge.extend([he_left, he_right, he_new, he_new.twin])
     dcel.half_edges.extend([he_new, he_new.twin])
     arc_parent = arc.parent
     if arc_parent is left_bp:
         # left_bp will be destroyed → right_bp survives
         right_bp.half_edge = he_new.twin
+        right_bp.face = he_new.twin.face
     elif arc_parent is right_bp:
         # right_bp will be destroyed → left_bp survives
         left_bp.half_edge = he_new
+        left_bp.face = he_new.face
 
     # 7. Aktualizacja BST
     root.replace_vanishing_leaf(arc)

@@ -35,15 +35,14 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
             parent_arc_above.right_child = new_subtree 
 
         new_subtree.parent = parent_arc_above
-    root._update_points_upwards(new_subtree)
 
     print("Left arc of a new subtree root:", new_subtree.left_point) 
     print("Middle arc:", new_subtree.right_child.left_child.centre)
     print("Right arc:", new_subtree.right_child.right_child.centre)
 
+    # 3. step, adding half-edges to DCEL
+    dcel.add_site_halfedges(new_event.centre, new_subtree)
     
-    # dcel.add_site_halfedges(new_event.centre, new_subtree)
-
     # 4. step, checking circle events for new triplets
     # Finding predecessor and successor
     left_neighbour = new_subtree.left_child.predecessor()
@@ -190,8 +189,8 @@ def replace_with_subtree(arc_above: Leaf, new_centre: list, dcel: DCEL):
     face_A = dcel.add_face(A)
     face_B = dcel.add_face(B)
 
-    edge_AB.face = face_B
-    edge_BA.face = face_A
+    edge_AB.face = face_A
+    edge_BA.face = face_B
 
     # face_A.outer_component = face_A.outer_component or edge_AB
     # face_B.outer_component = face_B.outer_component or edge_BA
