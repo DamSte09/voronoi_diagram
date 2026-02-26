@@ -33,7 +33,8 @@ def plot_voronoi(points, dcel, filename="my_voronoi_diagram.png"):
     # 3. Rysowanie punktów generatorów (blue)
     px, py = zip(*points)  # Krótszy zapis rozpakowania listy punktów
     ax.scatter(px, py, c="blue", s=40, marker="o", label="Sites", zorder=3)
-
+    ax.set_ylim(min(py) - 1, max(py) + 1)
+    ax.set_xlim(min(px) - 1, max(px) + 1)
     # Estetyka wykresu
     ax.set_aspect("equal")
     ax.set_title("Diagram Voronoi (DCEL)", fontsize=14)
@@ -47,7 +48,7 @@ def plot_voronoi(points, dcel, filename="my_voronoi_diagram.png"):
     plt.show()
 
 def main():
-    points = readPointsFromFile("data/points.csv")
+    points = readPointsFromFile("sdf.csv")
 
     Q = EventsQueue(points)    
     root = Root()
@@ -72,6 +73,8 @@ def main():
         else:
             continue
 
+    dcel.close_halfedges(points)
+
     print("DCEL vertices:", [ (v.x, v.y) for v in dcel.vertices])
     print("DCEL faces:", [f.centre for f in dcel.faces])
     # print("DCEL half-edges:", [ (he.origin.x, he.origin.y) for he in dcel.half_edges if he.origin is not None])
@@ -87,11 +90,12 @@ def main():
         if he.origin and he.twin and he.twin.origin:
             print(f"  ({he.origin.x}, {he.origin.y}) -> ({he.twin.origin.x}, {he.twin.origin.y})")
 
+    unclosed_edges = [(he.origin.x, he.origin.y) for he in dcel.half_edges if he.origin and not he.twin]
     print("Disconnected half-edges:")
     for he in dcel.half_edges:
         if he.origin and not he.twin:
             print(f"  ({he.origin.x}, {he.origin.y}) -> (None)")
-
+    
     fig, ax = plt.subplots()  # Create a figure containing a single Axes.
     x = []
     y=[]
@@ -105,6 +109,7 @@ def main():
         vy.append(v.y)
     plt.scatter(x, y)
     plt.scatter(vx, vy, c='red')
+
     plt.savefig("my_voronoi_diagram.png")
     #st.scatter_chart(points)
     plot_voronoi(points, dcel)
