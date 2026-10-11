@@ -40,9 +40,6 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
     print("Middle arc:", new_subtree.right_child.left_child.centre)
     print("Right arc:", new_subtree.right_child.right_child.centre)
 
-    # 3. step, adding half-edges to DCEL
-    dcel.add_site_halfedges(new_event.centre, new_subtree)
-    
     # 4. step, checking circle events for new triplets
     # Finding predecessor and successor
     left_neighbour = new_subtree.left_child.predecessor()

@@ -3,31 +3,14 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Circle
 import io
 import csv
-import sys
-import os
 
-# Importy modułów projektu
-# Sprawdź czy moduły są dostępne lokalnie lub w uploads
-try:
-    from src.structures.QE import EventsQueue, SiteEvent, CircleEvent
-    from src.structures.BST import Root, Node, Leaf
-    from src.structures.DCEL import DCEL, Vertex, HalfEdge, Face
-    from src.algorithms.site import handle_site_event
-    from src.algorithms.circle import handle_circle_event
-except ImportError:
-    # Jeśli nie ma lokalnie, spróbuj z uploads
-    sys.path.insert(0, '/mnt/user-data/uploads')
-    from src.structures.QE import EventsQueue, SiteEvent, CircleEvent
-    from src.structures.BST import Root, Node, Leaf
-    from src.structures.DCEL import DCEL, Vertex, HalfEdge, Face
-    from src.algorithms.site import handle_site_event
-    from src.algorithms.circle import handle_circle_event
 import folium
 from folium import plugins
 from streamlit_folium import st_folium
+
+from src.algorithms.fortune import compute_fortune
 
 
 # Konfiguracja strony
@@ -203,25 +186,7 @@ def generate_voronoi(points):
         return None
     
     try:
-        Q = EventsQueue(points)    
-        root = Root()
-        dcel = DCEL()
-        sweepline = None
-        
-        while Q.all_events:
-            event = Q.all_events.pop(0)
-        
-            if isinstance(event, SiteEvent):
-                sweepline = event.centre[1]
-                root = handle_site_event(root, event, queue=Q, dcel=dcel, y_sweep=sweepline)
-            elif isinstance(event, CircleEvent) and event.is_valid:
-                sweepline = event.centre[1]
-                root = handle_circle_event(event, sweepline, root, Q, dcel)
-            else:
-                continue
-
-        dcel.close_halfedges(points)
-        return dcel
+        return compute_fortune(points)
     except Exception as e:
         st.error(f"Błąd podczas generowania diagramu: {str(e)}")
         return None

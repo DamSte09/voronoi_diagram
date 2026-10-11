@@ -3,9 +3,10 @@ from src.structures.BST import Node
 
 
 class Vertex:
-    def __init__(self, point: list):
+    def __init__(self, point: list, internal: bool = False):
         self.x = point[0]
         self.y = point[1]
+        self.internal = internal
         self.incident_edge = []
 
 
@@ -75,62 +76,46 @@ class DCEL:
             [min_x - M, max_y + M],
         ]
 
-    def close_halfedges(self, points):
-        box = DCEL.bound_area(points)
+    def finish_edges(self, root, points):
+        """Zamyka półproste, które zostały na linii brzegowej po końcu pętli.
 
-        for he in self.half_edges:
-            # Skip if edge is already bounded or invalid
-            if he.origin is None or he.twin is None or he.twin.origin is not None:
-                continue
+        Każdy węzeł (breakpoint) w drzewie to jedna niedomknięta krawędź.
+        Breakpoint (A, B) przy miotle schodzącej w dół porusza się
+        w kierunku d = (B.y - A.y, A.x - B.x).
+        """
+        # ramka obejmuje punkty I wierzchołki Voronoia
+        all_points = list(points) + [(v.x, v.y) for v in self.vertices]
+        box = DCEL.bound_area(all_points)
 
-            if he.face is None or he.twin.face is None:
-                continue
+        # zbieramy wszystkie węzły wewnętrzne
+        nodes = []
+        stack = [root.node]
+        while stack:
+            n = stack.pop()
+            if isinstance(n, Node):
+                nodes.append(n)
+                stack.extend([n.left_child, n.right_child])
 
-            origin = (he.origin.x, he.origin.y)
-            A = he.face.centre  # Site on the left of the half-edge
-            B = he.twin.face.centre  # Site on the right of the half-edge
-
-            # The Voronoi edge lies on the perpendicular bisector of segment AB
-            # Get perpendicular direction (rotated 90 degrees)
-            dx = B[0] - A[0]
-            dy = B[1] - A[1]
-            perp = (dy, dx)  # Perpendicular vector
-            
-            # The midpoint between the two sites
-            mid = ((A[0] + B[0]) / 2, (A[1] + B[1]) / 2)
-            
-            # Vector from midpoint to the known origin of the edge
-            to_origin = (origin[0] - mid[0], origin[1] - mid[1])
-            
-            # Determine which direction the unbounded edge extends from origin
-            # We need to go in the direction AWAY from the origin point
-            # If the perpendicular vector points in the same direction as to_origin,
-            # we need to reverse it to point away
-            dot = perp[0] * to_origin[0] + perp[1] * to_origin[1]
-            
-            if dot > 0:
-                # perp points towards origin, we need to go the opposite way
-                direction = DCEL.normalize((-perp[0], -perp[1]))
+        # najpierw liczymy, potem modyfikujemy – krawędź bez żadnego
+        # wierzchołka ma DWA węzły, które nie mogą sobie przeszkadzać
+        pending = []
+        for node in nodes:
+            A, B = node.left_point, node.right_point
+            d = DCEL.normalize((B[1] - A[1], A[0] - B[0]))
+            twin_origin = node.half_edge.twin.origin
+            if twin_origin is not None:
+                start = (twin_origin.x, twin_origin.y)
             else:
-                # perp points away from origin, this is correct
-                direction = DCEL.normalize(perp)
+                start = ((A[0] + B[0]) / 2, (A[1] + B[1]) / 2)
+            pending.append((node.half_edge, start, d))
 
-            # Find intersection with bounding box
-            endpoint = DCEL.intersect_ray_with_box(origin, direction, box)
-            
-            if endpoint is None:
-                # Fallback: try the opposite direction
-                direction = (-direction[0], -direction[1])
-                endpoint = DCEL.intersect_ray_with_box(origin, direction, box)
-                
-            if endpoint is None:
-                # Still no intersection, skip this edge
+        for he, start, d in pending:
+            end = DCEL.intersect_ray_with_box(start, d, box)
+            if end is None:
                 continue
-
-            # Create vertex at the boundary and assign to twin's origin
-            v = Vertex(endpoint)
+            v = Vertex(end, internal=False)
             self.vertices.append(v)
-            he.twin.origin = v
+            he.origin = v
 
     @staticmethod
     def normalize(v):
@@ -139,13 +124,6 @@ class DCEL:
         if length == 0:
             return (0, 0)
         return (v[0]/length, v[1]/length)
-
-    @staticmethod
-    def perpendicular_vector(a, b):
-        """Get perpendicular vector to the segment from a to b."""
-        dx = b[0] - a[0]
-        dy = b[1] - a[1]
-        return (-dy, dx)
 
     @staticmethod
     def intersect_ray_with_box(origin, direction, box):
