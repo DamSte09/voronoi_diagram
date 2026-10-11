@@ -1,97 +1,109 @@
 from __future__ import annotations
 
 import math
-import queue
+
+from src.structures.QE import SiteEvent
 
 class Root:
     def __init__(self, node=None):
         self.node = node
 
-    def show_all_leafs(self):
-        all_leafs = []
-        curr = self.node
-        while isinstance(curr, Node):
-            curr = curr.left_child
-        first_leaf = curr
-        succ = first_leaf.successor()
-        all_leafs.extend([first_leaf, succ])
-        while succ is not None:
-            succ = succ.successor()
-            if succ is None:
-                break
-            all_leafs.append(succ)
-        
-        print("All centres from leaves: ", [leaf.centre for leaf in all_leafs])
-
-
-    # TO JEST PROBLEMEM, NIE USUWA POPRAWNIE LIŚCI
-    def replace_vanishing_leaf(self, leaf, left_point, right_point):
-        """Removes fading leaf which represent fading arc in BST
-        After leaf is removed, points in grandparent node are updated.
-
-        :param leaf: Leaf which represnts fading arc
+    def replace_vanishing_leaf(self, leaf: Leaf):
         """
-        # parent of leaf
-        leaf_parent = leaf.parent
-        if leaf_parent is None:
+        Removes a leaf representing a disappearing arc from the beachline BST.
+        Structural operation only — no geometry is handled here.
+        """
+
+        parent = leaf.parent
+        if parent is None:
+            # Jedyny element w drzewie
+            self.node = None
             return
 
-        # Find which child is sibling of a leaf
-        if leaf_parent.left_child == leaf:
-            replacement = leaf_parent.right_child
+        # Sibling (drugie dziecko rodzica)
+        if parent.left_child is leaf:
+            sibling = parent.right_child
         else:
-            replacement = leaf_parent.left_child
+            sibling = parent.left_child
 
-        grand = leaf_parent.parent
+        grandparent = parent.parent
 
-        # Is leaf_parent root
-        if grand is None:
-            replacement.parent = None
-            self.node = replacement
+        # 1. Podpinamy sibling zamiast parent
+        sibling.parent = grandparent
+
+        if grandparent is None:
+            # parent był rootem
+            self.node = sibling
         else:
-            # Grandparent is now parent of replacement
-            replacement.parent = grand
-
-            # Check which child new replacement is and replaces child
-            if grand.right_child == leaf_parent:
-                grand.right_child = replacement
+            if grandparent.left_child is parent:
+                grandparent.left_child = sibling
             else:
-                grand.left_child = replacement
+                grandparent.right_child = sibling
 
-        if isinstance(replacement, Node):
-            replacement.left_point = left_point
-            replacement.right_point = right_point
-
-        # Updates points in nodes
-        self._update_points_upwards(replacement)
-
-        # Cleanup
+        # 2. Czyścimy referencje (GC / debug)
         leaf.parent = None
-        leaf_parent.left_child = None
-        leaf_parent.right_child = None
-        leaf_parent.parent = None
-        if leaf.circle_event is not None:
-            # queue.remove_from_queue(leaf.circle_event)
-            leaf.circle_event = None
+        parent.left_child = None
+        parent.right_child = None
+        parent.parent = None
 
-        return self
+        # 3. Aktualizacja breakpointów w górę drzewa
+        self._update_points_upwards(sibling.parent)
 
-    def _update_points_upwards(self, node):
-        current = node
+        return
+
+    def _update_points_upwards(self, start):
+        """
+        Recomputes breakpoint-defining points (left_point, right_point)
+        for all nodes on the path from `start` up to the root.
+        """
+
+        current = start
+
         while current is not None and isinstance(current, Node):
-            # lewe poddrzewo: najbardziej prawy liść
-            left = current.left_child
-            while isinstance(left, Node):
-                left = left.right_child
-            current.left_point = left.centre
+            # --- lewy punkt: najbardziej prawy liść w lewym poddrzewie ---
+            left_sub = current.left_child
+            while isinstance(left_sub, Node):
+                left_sub = left_sub.right_child
 
-            # prawe poddrzewo: najbardziej lewy liść
-            right = current.right_child
-            while isinstance(right, Node):
-                right = right.left_child
-            current.right_point = right.centre
+            if left_sub is None:
+                # struktura chwilowo niepełna — nie aktualizujemy
+                pass
+            else:
+                current.left_point = left_sub.centre
 
+            # --- prawy punkt: najbardziej lewy liść w prawym poddrzewie ---
+            right_sub = current.right_child
+            while isinstance(right_sub, Node):
+                right_sub = right_sub.left_child
+
+            if right_sub is None:
+                pass
+            else:
+                current.right_point = right_sub.centre
+
+            # idziemy wyżej
             current = current.parent
+
+    def find_arc_above(root, event: SiteEvent, y_sweep: float):
+        curr = root.node
+        x = event.centre[0]
+
+        while isinstance(curr, Node):
+            xb = curr.count_x_breakpoint(y_sweep)
+            print("Breakpoint x for points ", curr.left_point, curr.right_point, " at y=", y_sweep, " is ", xb)
+            if xb is None:
+                raise RuntimeError(
+                    f"Invalid breakpoint for points "
+                    f"{curr.left_point}, {curr.right_point} at y={y_sweep}"
+                )
+
+            if x < xb:
+                curr = curr.left_child
+            else:
+                curr = curr.right_child
+
+        return curr
+
 
 class Node:
     """Break point on beachline, keeps 2 sorted centres by x,
@@ -106,34 +118,72 @@ class Node:
         self.right_child = None
         self.half_edge = None
 
-    def balance_tree(self):
-        pass 
-
-    def count_x_breakpoint(self,  y_sweep: float):
-        """Counts x breakpoint for node of 2 points and sweepline on new centre"""
+    def count_x_breakpoint(self, y_sweep: float):
+        """
+        Oblicza współrzędną x punktu przecięcia dwóch parabol.
+        
+        Parameters
+        ----------
+        y_sweep : float
+            Pozycja linii zamiatającej (sweep line)
+        
+        Returns
+        -------
+        float or None
+            Współrzędna x punktu przecięcia lub None jeśli nie istnieje
+        """
         x1, y1 = self.left_point
         x2, y2 = self.right_point
-
+    
+        
+        # Przypadek gdy oba punkty mają tę samą współrzędną y
+        # (breakpoint jest dokładnie pośrodku)
         if y1 == y2:
-                return (x1 + x2) / 2
+            return (x1 + x2) / 2
         
-        a = y2 - y1
-        b = 2 * (-y2 * x1 + y1 * x2 + y_sweep * x1 - y_sweep * x2)
-        c = (y2 - y_sweep) * (x1**2 + y1**2 - y_sweep**2) - (y1 - y_sweep) * (
-            x2**2 + y2**2 - y_sweep**2
-        )
-
-        delta = b*b - 4*a*c
-        if delta < 0 or a == 0:
-                return None 
+        # Przypadek gdy lewy punkt jest na linii zamiatającej
+        if y1 == y_sweep:
+            return x1
         
-        x1_bp = (-b+math.sqrt(delta)) / (2*a)
-        x2_bp = (-b - math.sqrt(delta)) / (2 * a)
-
-        if x1 < x2:
-            return max(x1_bp, x2_bp)  # Prawy breakpoint
-        else:
-            return min(x1_bp, x2_bp)
+        # Przypadek gdy prawy punkt jest na linii zamiatającej
+        if y2 == y_sweep:
+            return x2
+        
+        # Podstawowe współczynniki równania
+        u = 2 * (y1 - y_sweep)
+        v = 2 * (y2 - y_sweep)
+        
+        # Sprawdzenie czy któryś mianownik jest zerem (parabola zdegenerowana)
+        if u == 0 or v == 0:
+            return None
+        
+        # Rozwiązanie równania kwadratowego:
+        # 1/u * (x² - 2*x1*x + x1² + y1² - y_sweep²) = 1/v * (x² - 2*x2*x + x2² + y2² - y_sweep²)
+        
+        # Po przekształceniu do postaci: (u-v)x² + 2(x2*v - x1*u)x + ... = 0
+        # zgodnie z algorytmem Wolframa Alpha użytym w foronoi:
+        
+        a = u - v
+        
+        if a == 0:
+            return None
+        
+        # Obliczenie pierwiastka z wzoru z foronoi
+        # x = -(sqrt(v * (x1² * u - 2*x1*x2*u + y1²*(u-v) + x2²*u) + y2²*u*(v-u) + y_sweep²*(u-v)²) + x1*v - x2*u) / (u-v)
+        
+        term1 = x1**2 * u - 2*x1*x2*u + y1**2*(u-v) + x2**2*u
+        term2 = y2**2 * u * (v-u)
+        term3 = y_sweep**2 * (u-v)**2
+        
+        discriminant = v * term1 + term2 + term3
+        
+        if discriminant < 0:
+            return None
+        
+        sqrt_term = math.sqrt(discriminant)
+        x = -(sqrt_term + x1*v - x2*u) / a
+        
+        return x
 
 
 class Leaf:
@@ -182,3 +232,31 @@ class Leaf:
             curr = curr.left_child
 
         return curr
+
+    def left_breakpoint_node(self, root: Root) -> Node | None:
+        """Finds left breakpoint Node in BST beachline
+        
+        :return: Node or None if not any
+        """
+        curr = self
+        while curr.parent and curr == curr.parent.left_child:
+            curr = curr.parent
+
+        if not curr.parent:
+            return None
+
+        return curr.parent
+    
+    def right_breakpoint_node(self, root: Root) -> Node | None:
+        """Finds right breakpoint Node in BST beachline
+        
+        :return: Node or None if not any
+        """
+        curr = self
+        while curr.parent and curr == curr.parent.right_child:
+            curr = curr.parent
+
+        if not curr.parent:
+            return None
+
+        return curr.parent

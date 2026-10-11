@@ -1,40 +1,21 @@
-from src.utils.points import readPointsFromFile
-from src.structures.QE import EventsQueue, SiteEvent, CircleEvent
-from src.structures.BST import Root, Node, Leaf
-from src.structures.DCEL import DCEL, Vertex, HalfEdge, Face
-from src.algorithms.site import handle_site_event
-from src.algorithms.circle import handle_circle_event
+from src.utils.points_generator import read_points_from_file
+from src.visualization.plotting import plot_voronoi
+from src.algorithms.fortune import compute_fortune
 
-import streamlit as st
+import matplotlib.pyplot as plt
 
 
 def main():
-    points = readPointsFromFile("data/points.csv")
+    points = read_points_from_file("sdf.csv")
 
-    Q = EventsQueue(points)    
-    root = Root()
-    dcel = DCEL()
-    
-    while Q.all_events:
-    # for _ in range():
-        event = Q.all_events.pop(0)
-        print('\n\n')
-        print("New event point:", event.centre)
-        print("All points: ", [e.centre for e in Q.all_events])
-        print('\n')
-    
-        if isinstance(event, SiteEvent):
-            root = handle_site_event(root, event, queue=Q, dcel=dcel )
-        else:
-            print("Event point:", event.centre, "Event pointer: ", event.leaf_pointer)
-            vanishing_leaf = event.leaf_pointer
-            print(vanishing_leaf.centre)
-            root = handle_circle_event(vanishing_leaf, root, Q, dcel)
+    dcel = compute_fortune(points)
 
+    print("Count of faces:", len(dcel.faces))
+    print("Count of half-edges:", len(dcel.half_edges))
+    print("Count of vertices:", len(dcel.vertices))
 
-        print(Q.all_events)
-    print(root.show_all_leafs())
-    #st.scatter_chart(points)
+    plot_voronoi(points, dcel)
+
 
 if __name__ == '__main__':
     main()
