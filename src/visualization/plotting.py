@@ -17,8 +17,8 @@ def plot_voronoi(points, dcel, filename="my_voronoi_diagram.png"):
                 seen_edges.add(edge_id)
 
     # 2. Rysowanie wierzchołków Voronoi (red)
-    vx = [v.x for v in dcel.vertices if v.internal]
-    vy = [v.y for v in dcel.vertices if v.internal]
+    vx = [v.x for v in dcel.vertices ]
+    vy = [v.y for v in dcel.vertices ]
     ax.scatter(vx, vy, c="red", s=20, label="Voronoi vertices", zorder=2)
 
     # 3. Rysowanie punktów generatorów (blue)
