@@ -67,65 +67,6 @@ def handle_site_event(root: Root, new_event: SiteEvent, queue: EventsQueue, dcel
     return root
 
 
-def replace_with_subtree1(arc_above: Leaf, new_centre: list, dcel: DCEL) -> Node:
-    """
-    Replaces a leaf with a subtree after a site event.
-    Structure:
-
-            N(j, i)
-           /      \
-        L(j)     N(i, j)
-                 /    \
-              L(i)    L(j)
-    """
-
-    point_j = arc_above.centre
-    point_i = new_centre
-
-    # --- liście ---
-    left_leaf = Leaf(point_j)
-    middle_leaf = Leaf(point_i)
-    right_leaf = Leaf(point_j)
-
-    # --- root node: breakpoint (j, i) ---
-    root = Node(left_point=point_j, right_point=point_i)
-
-    root.left_child = left_leaf
-    left_leaf.parent = root
-
-    # --- right node: breakpoint (i, j) ---
-    right_node = Node(left_point=point_i, right_point=point_j)
-
-    right_node.parent = root
-    root.right_child = right_node
-
-    right_node.left_child = middle_leaf
-    right_node.right_child = right_leaf
-
-    middle_leaf.parent = right_node
-    right_leaf.parent = right_node
-
-    # --- DCEL / half-edges ---
-    he_ji = HalfEdge()
-    he_ij = HalfEdge()
-
-    he_ji.twin = he_ij
-    he_ij.twin = he_ji
-
-    face_j = dcel.add_face(point_j)
-    face_i = dcel.add_face(point_i)
-
-    he_ji.face = face_i
-    he_ij.face = face_j
-
-    root.half_edge = he_ji
-    right_node.half_edge = he_ij
-
-    dcel.half_edges.extend([he_ji, he_ij])
-
-    return root
-
-
 def replace_with_subtree(arc_above: Leaf, new_centre: list, dcel: DCEL):
     """Replaces leaf of arc above new centre with subtree with 3 leafs:
     arc_above, new_centre, arc_above

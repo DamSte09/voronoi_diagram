@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.structures.QE import Leaf
+    from src.structures.BST import Leaf
 import math
 
 class EventsQueue:
@@ -44,11 +44,6 @@ class CircleEvent:
         self.triple_points = None
         self.triple_arcs = None
 
-    def is_possible(a, b, c):
-        if CircleEvent.compute_circle_center(a, b, c):
-            return True
-        return False
-    
     @staticmethod
     def compute_circle_center(a, b, c):
         Ax, Ay = a

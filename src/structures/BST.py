@@ -1,30 +1,12 @@
 from __future__ import annotations
 
-from logging import root
 import math
-import queue
 
 from src.structures.QE import SiteEvent
 
 class Root:
     def __init__(self, node=None):
         self.node = node
-
-    def show_all_leafs(self):
-        all_leafs = []
-        curr = self.node
-        while isinstance(curr, Node):
-            curr = curr.left_child
-        first_leaf = curr
-        succ = first_leaf.successor()
-        all_leafs.extend([first_leaf, succ])
-        while succ is not None:
-            succ = succ.successor()
-            if succ is None:
-                break
-            all_leafs.append(succ)
-        
-        print("All centres from leaves: ", [leaf.centre for leaf in all_leafs])
 
     def replace_vanishing_leaf(self, leaf: Leaf):
         """
@@ -122,36 +104,6 @@ class Root:
 
         return curr
 
-    def find_breakpoint_nodes(self, leaf: Leaf):
-        """
-        Znajduje dwa węzły (Node), które reprezentują breakpointy 
-        sąsiadujące z liściem (łukiem) w Beach Line.
-        """
-        left_breakpoint = None
-        right_breakpoint = None
-
-        # Idziemy w górę drzewa od liścia
-        current = leaf
-        while current.parent is not None:
-            parent = current.parent
-            
-            # Jeśli przyszliśmy z prawej strony, to parent jest lewym breakpointem
-            if parent.right_child == current:
-                if left_breakpoint is None:
-                    left_breakpoint = parent
-            
-            # Jeśli przyszliśmy z lewej strony, to parent jest prawym breakpointem
-            if parent.left_child == current:
-                if right_breakpoint is None:
-                    right_breakpoint = parent
-            
-            # Jeśli znaleźliśmy oba, możemy przestać (opcjonalne, ale przyspiesza)
-            if left_breakpoint and right_breakpoint:
-                break
-                
-            current = parent
-
-        return left_breakpoint, right_breakpoint
 
 class Node:
     """Break point on beachline, keeps 2 sorted centres by x,

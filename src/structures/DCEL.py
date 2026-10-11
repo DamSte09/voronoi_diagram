@@ -59,10 +59,6 @@ class DCEL:
 
         return new_subtree
     
-    def add_vertex(self, point):
-        v = Vertex(point)
-        self.vertices.append(v)
-        
     @staticmethod
     def bound_area(points):
         min_x = min(p[0] for p in points)

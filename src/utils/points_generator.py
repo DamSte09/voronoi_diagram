@@ -35,21 +35,11 @@ def main():
     points = []
     N = 10
 
-    # print("Punkty z pliku")
-    # points = readPointsFromFile("data/points.csv") 
-    # print(points)
-
-    print("Wygenerowane punkty")
-    points = generatePoints(N)
+    print("Wygenerowane punkty:")
+    points = generate_points(N)
     print(points)
 
-
-    savePointsToFile(points)
-
-    
-    #points = np.asarray(points)
-    # plt.scatter(points[:, 0], points[:, 1])
-
+    save_points_to_file(points)
 
 if __name__ == '__main__':
     main()
