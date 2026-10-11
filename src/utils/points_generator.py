@@ -4,19 +4,19 @@ import numpy as np
 import pandas as pd
 
 
-def generatePoints(number_points):
+def generate_points(number_points):
     array_points = []
     for i in range(number_points): 
         point = np.random.uniform(0, 10, size  = 2)
         array_points.append(point)
     return array_points
 
-def savePointsToFile(array_points):
+def save_points_to_file(array_points):
     df = pd.DataFrame(array_points)
     df.to_csv("sdf.csv", index = False, sep = ";")
     print("Zapisano do pliku")
 
-def readPointsFromFile(path, sep = ';'):
+def read_points_from_file(path, sep = ';'):
     array_points = []
 
     try:
