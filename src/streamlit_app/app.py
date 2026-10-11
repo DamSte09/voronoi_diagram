@@ -520,7 +520,7 @@ with col_right:
         st.metric("Liczba punktów", len(current_points))
         
         if st.session_state.diagram_generated and st.session_state.dcel:
-            st.metric("Wierzchołki Voronoi", len(st.session_state.dcel.vertices))
+            st.metric("Wierzchołki Voronoi", sum(v.internal for v in st.session_state.dcel.vertices))
             st.metric("Krawędzie", len(st.session_state.dcel.half_edges) // 2)
             st.metric("Regiony", len(st.session_state.dcel.faces))
     
