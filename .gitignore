@@ -1,4 +1,6 @@
 venv
+.venv
+.vscode
 __pycache__
 include
 lib 
@@ -13,5 +15,5 @@ data/
 *.jpeg
 *.gif
 *.pdf
-*.svg
+*.csv
 xd.py
